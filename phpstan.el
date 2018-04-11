@@ -28,7 +28,71 @@
 ;; https://github.com/phpstan/phpstan
 
 ;;; Code:
+(require 'php-project)
 (require 'flycheck nil)
+
+
+;; Variables:
+
+;;;###autoload
+(progn
+  (defvar phpstan-configure-file nil)
+  (make-variable-buffer-local 'phpstan-configure-file)
+  (put 'phpstan-configure-file 'safe-local-variable
+       #'(lambda (v) (if (consp v)
+                         (and (eq 'root (car v)) (stringp (cdr v)))
+                       (null v) (stringp v)))))
+
+;;;###autoload
+(progn
+  (defvar phpstan-level "0")
+  (make-variable-buffer-local 'phpstan-level)
+  (put 'phpstan-level 'safe-local-variable
+       #'(lambda (v) (or (null v)
+                         (integerp v)
+                         (and (stringp v)
+                              (string-match-p "\\`[1-9][0-9]*\\'" v))))))
+
+;;;###autoload
+(progn
+  (defvar phpstan-executable nil)
+  (make-variable-buffer-local 'phpstan-executable)
+  (put 'phpstan-executable 'safe-local-variable
+       #'(lambda (v) (if (consp v)
+                         (and (eq 'root (car v)) (stringp (cdr v)))
+                       (null v) (stringp v)))))
+
+;; Functions:
+(defun phpstan-get-configure-file ()
+  "Return path to phpstan configure file or `NIL'."
+  (if phpstan-configure-file
+      (if (and (consp phpstan-configure-file)
+               (eq 'root (car phpstan-configure-file)))
+          (expand-file-name (cdr phpstan-configure-file) (php-project-get-root-dir))
+        phpstan-configure-file)
+    (let ((dir (locate-dominating-file "phpstan.neon" default-directory)))
+      (when dir
+        (expand-file-name "phpstan.neon" dir)))))
+
+(defun phpstan-get-level ()
+  "Return path to phpstan configure file or `NIL'."
+  (cond
+   ((null phpstan-level) "0")
+   ((integerp phpstan-level) (int-to-string phpstan-level))
+   (t phpstan-level)))
+
+(defun phpstan-get-executable ()
+  "Return PHPStan excutable file."
+  (let ((executable (or phpstan-executable '(root . "vendor/bin/phpstan"))))
+    (when (and (consp executable)
+               (eq 'root (car executable)))
+      (setq executable
+            (expand-file-name (cdr executable) (php-project-get-root-dir))))
+    (if (file-exists-p executable)
+        executable
+      (if (executable-find "phpstan")
+          "phpstan"
+        (error "PHPStan executable not found")))))
 
 ;;;###autoload
 (when (featurep 'flycheck)
