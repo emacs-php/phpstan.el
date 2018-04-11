@@ -36,9 +36,9 @@
 
 ;;;###autoload
 (progn
-  (defvar phpstan-configure-file nil)
-  (make-variable-buffer-local 'phpstan-configure-file)
-  (put 'phpstan-configure-file 'safe-local-variable
+  (defvar phpstan-config-file nil)
+  (make-variable-buffer-local 'phpstan-config-file)
+  (put 'phpstan-config-file 'safe-local-variable
        #'(lambda (v) (if (consp v)
                          (and (eq 'root (car v)) (stringp (cdr v)))
                        (null v) (stringp v)))))
@@ -63,13 +63,13 @@
                        (null v) (stringp v)))))
 
 ;; Functions:
-(defun phpstan-get-configure-file ()
+(defun phpstan-get-config-file ()
   "Return path to phpstan configure file or `NIL'."
-  (if phpstan-configure-file
-      (if (and (consp phpstan-configure-file)
-               (eq 'root (car phpstan-configure-file)))
-          (expand-file-name (cdr phpstan-configure-file) (php-project-get-root-dir))
-        phpstan-configure-file)
+  (if phpstan-config-file
+      (if (and (consp phpstan-config-file)
+               (eq 'root (car phpstan-config-file)))
+          (expand-file-name (cdr phpstan-config-file) (php-project-get-root-dir))
+        phpstan-config-file)
     (cl-loop for name in '("phpstan.neon" "phpstan.neon.dist")
              for file = nil
              for dir  = (locate-dominating-file default-directory name)
@@ -102,11 +102,11 @@
     "PHP static analyzer based on PHPStan."
     :command ("php" (eval (phpstan-get-executable))
               "analyze" "--errorFormat=raw" "--no-progress" "--no-interaction"
-              "-c" (eval (phpstan-get-configure-file))
+              "-c" (eval (phpstan-get-config-file))
               "-l" (eval (phpstan-get-level))
               source)
     :working-directory (lambda (_) (php-project-get-root-dir))
-    :enabled (lambda () (phpstan-get-configure-file))
+    :enabled (lambda () (phpstan-get-config-file))
     :error-patterns
     ((error line-start (1+ (not (any ":"))) ":" line ":" (message) line-end))
     :modes (php-mode)

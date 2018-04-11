@@ -8,6 +8,6 @@ echo Fooo;
 echo FOO;
 
 // Local Variables:
-// phpstan-configure-file: (root . "tests/phpstan.neon")
+// phpstan-config-file: (root . "tests/phpstan.neon")
 // phpstan-level: 7
 // End:
