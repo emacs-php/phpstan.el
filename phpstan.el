@@ -98,7 +98,7 @@
 
 ;;;###autoload
 (when (featurep 'flycheck)
-  (flycheck-define-checker phpstan-checker
+  (flycheck-define-checker phpstan
     "PHP static analyzer based on PHPStan."
     :command ("php" (eval (phpstan-get-executable))
               "analyze" "--errorFormat=raw" "--no-progress" "--no-interaction"
