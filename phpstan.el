@@ -100,13 +100,13 @@
 (when (featurep 'flycheck)
   (flycheck-define-checker phpstan-checker
     "PHP static analyzer based on PHPStan."
-    :command ("phpstan" 
-              "analyze" 
-              "--no-progress"
-              "--errorFormat=raw" 
+    :command ("php" (eval (phpstan-get-executable))
+              "analyze" "--errorFormat=raw" "--no-progress" "--no-interaction"
+              "-c" (eval (phpstan-get-configure-file))
+              "-l" (eval (phpstan-get-level))
               source)
     :working-directory (lambda (_) (php-project-get-root-dir))
-    :enabled (lambda () (locate-dominating-file "phpstan.neon" default-directory))
+    :enabled (lambda () (phpstan-get-configure-file))
     :error-patterns
     ((error line-start (1+ (not (any ":"))) ":" line ":" (message) line-end))
     :modes (php-mode)
