@@ -1,0 +1,8 @@
+{
+    "name": "emacs-php/phpstan.el",
+    "description": "Emacs interface to PHPStan",
+    "license": "GPL-3.0-or-later",
+    "require-dev": {
+        "phpstan/phpstan": "dev-master"
+    }
+}
