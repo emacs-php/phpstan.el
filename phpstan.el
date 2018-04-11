@@ -34,7 +34,11 @@
 (when (featurep 'flycheck)
   (flycheck-define-checker phpstan-checker
     "PHP static analyzer based on PHPStan."
-    :command ("phpstan" "analyze" "--errorFormat=raw" source)
+    :command ("phpstan" 
+              "analyze" 
+              "--no-progress"
+              "--errorFormat=raw" 
+              source)
     :working-directory (lambda (_) (php-project-get-root-dir))
     :enabled (lambda () (locate-dominating-file "phpstan.neon" default-directory))
     :error-patterns
