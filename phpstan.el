@@ -54,10 +54,10 @@ use a directory-local variable to specify this per-project."
 
   (flycheck-define-checker phpstan-checker
     "PHP static analyzer based on PHPStan."
-    :command ("phpstan" 
-              "analyze" 
+    :command ("phpstan"
+              "analyze"
               "--no-progress"
-              "--errorFormat=raw" 
+              "--errorFormat=raw"
               (option "-l" flycheck-phpstan-level)
               (option "-c" flycheck-phpstan-config)
               source)
