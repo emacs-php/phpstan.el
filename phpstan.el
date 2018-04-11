@@ -32,12 +32,34 @@
 
 ;;;###autoload
 (when (featurep 'flycheck)
+  (flycheck-def-option-var flycheck-phpstan-config nil phpstan-checker
+    "Path to the phpstan configuration for current project.
+
+This is passed to the -l option in phpstan.  It is a good idea is
+to use a directory-local variable to specify this per-project."
+    :type 'file
+    :safe (lambda (x)
+            (stringp x)
+            (file-exists-p x)))
+
+  (flycheck-def-option-var flycheck-phpstan-level "0" phpstan-checker
+    "Strictness level phpstan uses to check the sources.
+
+This is passed to the -c option in phpstan.  A good idea is to
+use a directory-local variable to specify this per-project."
+    :type 'string
+    :safe (lambda (x)
+            (and (stringp x)
+                 (string-match-p "\\`[0-9]+\\'" x))))
+
   (flycheck-define-checker phpstan-checker
     "PHP static analyzer based on PHPStan."
-    :command ("phpstan" 
-              "analyze" 
+    :command ("phpstan"
+              "analyze"
               "--no-progress"
-              "--errorFormat=raw" 
+              "--errorFormat=raw"
+              (option "-l" flycheck-phpstan-level)
+              (option "-c" flycheck-phpstan-config)
               source)
     :working-directory (lambda (_) (php-project-get-root-dir))
     :enabled (lambda () (locate-dominating-file "phpstan.neon" default-directory))
