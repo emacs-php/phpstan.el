@@ -70,14 +70,11 @@
                (eq 'root (car phpstan-configure-file)))
           (expand-file-name (cdr phpstan-configure-file) (php-project-get-root-dir))
         phpstan-configure-file)
-    (let ((dir (or (locate-dominating-file "phpstan.neon" default-directory)
-                   (locate-dominating-file "phpstan.neon.dist" default-directory)))
-          file)
-      (when dir
-        (setq file (expand-file-name "phpstan.neon.dist" dir))
-        (if (file-exists-p file)
-            file
-          (expand-file-name "phpstan.neon" dir))))))
+    (cl-loop for name in '("phpstan.neon" "phpstan.neon.dist")
+             for file = nil
+             for dir  = (locate-dominating-file default-directory name)
+             if dir
+             return (expand-file-name name dir))))
 
 (defun phpstan-get-level ()
   "Return path to phpstan configure file or `NIL'."
