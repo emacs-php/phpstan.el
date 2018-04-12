@@ -74,6 +74,8 @@
   (put 'phpstan-replace-path-prefix 'safe-local-variable
        #'(lambda (v) (or (null v) (stringp v)))))
 
+(defconst phpstan-docker-executable "docker")
+
 ;; Usually it is defined dynamically by flycheck
 (defvar flycheck-phpstan-executable)
 
@@ -84,6 +86,9 @@
 
 STRING
      Absolute path to `phpstan' executable file.
+
+`docker'
+     Use Docker using phpstan/docker-image.
 
 `(root . STRING)'
      Relative path to `phpstan' executable file.
@@ -98,7 +103,7 @@ NIL
        #'(lambda (v) (if (consp v)
                          (or (and (eq 'root (car v)) (stringp (cdr v)))
                              (and (stringp (car v)) (listp (cdr v))))
-                       (or (null v) (stringp v))))))
+                       (or (eq 'docker v) (null v) (stringp v))))))
 
 ;; Functions:
 (defun phpstan-get-config-file ()
@@ -119,10 +124,14 @@ NIL
     (when (and phpstan-flycheck-auto-set-executable
                (not (and (boundp 'flycheck-phpstan-executable)
                          (symbol-value 'flycheck-phpstan-executable)))
-               (stringp (car phpstan-executable))
-               (listp (cdr phpstan-executable)))
+               (or (eq 'docker phpstan-executable)
+                   (and (consp phpstan-executable)
+                        (stringp (car phpstan-executable))
+                        (listp (cdr phpstan-executable)))))
       (set (make-local-variable 'flycheck-phpstan-executable)
-           (car phpstan-executable)))))
+           (if (eq 'docker phpstan-executable)
+               phpstan-docker-executable
+             (car phpstan-executable))))))
 
 (defun phpstan-normalize-path (source-original source)
   "Return normalized source file path to pass by `SOURCE-ORIGINAL' OR `SOURCE'.
@@ -133,6 +142,7 @@ it returns the value of `SOURCE' as it is."
         (prefix
          (cond
           ((not (null phpstan-replace-path-prefix)) phpstan-replace-path-prefix)
+          ((eq 'docker phpstan-executable) "/app")
           ((and (consp phpstan-executable)
                 (string= "docker" (car phpstan-executable))) "/app"))))
     (if prefix
@@ -153,6 +163,10 @@ it returns the value of `SOURCE' as it is."
 (defun phpstan-get-executable ()
   "Return PHPStan excutable file."
   (cond
+   ((eq 'docker phpstan-executable)
+    (list "run" "--rm" "-v"
+          (concat (expand-file-name (php-project-get-root-dir)) ":/app")
+          "phpstan/phpstan"))
    ((and (consp phpstan-executable)
          (eq 'root (car phpstan-executable)))
     (expand-file-name (cdr phpstan-executable) (php-project-get-root-dir)))
