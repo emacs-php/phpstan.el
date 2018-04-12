@@ -139,12 +139,14 @@ NIL
   (if phpstan-config-file
       (if (and (consp phpstan-config-file)
                (eq 'root (car phpstan-config-file)))
+          ;; Use (php-project-get-root-dir), not phpstan-working-dir.
           (expand-file-name (cdr phpstan-config-file) (php-project-get-root-dir))
         phpstan-config-file)
-    (cl-loop for name in '("phpstan.neon" "phpstan.neon.dist")
-             for dir  = (locate-dominating-file default-directory name)
-             if dir
-             return (expand-file-name name dir))))
+    (let ((working-directory (phpstan-get-working-dir)))
+      (cl-loop for name in '("phpstan.neon" "phpstan.neon.dist")
+               for dir  = (locate-dominating-file working-directory name)
+               if dir
+               return (expand-file-name name dir)))))
 
 (defun phpstan-get-config-file-and-set-flycheck-variable ()
   "Return path to phpstan configure file, and set buffer execute in side effect."
