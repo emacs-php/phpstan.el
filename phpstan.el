@@ -91,9 +91,8 @@
             (expand-file-name (cdr executable) (php-project-get-root-dir))))
     (if (file-exists-p executable)
         executable
-      (if (executable-find "phpstan")
-          "phpstan"
-        (error "PHPStan executable not found")))))
+      (or (executable-find "phpstan")
+          (error "PHPStan executable not found")))))
 
 ;;;###autoload
 (when (featurep 'flycheck)
