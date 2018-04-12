@@ -71,7 +71,6 @@
           (expand-file-name (cdr phpstan-config-file) (php-project-get-root-dir))
         phpstan-config-file)
     (cl-loop for name in '("phpstan.neon" "phpstan.neon.dist")
-             for file = nil
              for dir  = (locate-dominating-file default-directory name)
              if dir
              return (expand-file-name name dir))))
