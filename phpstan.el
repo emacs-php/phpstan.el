@@ -67,6 +67,13 @@
                          (and (stringp v)
                               (string-match-p "\\`[0-9]\\'" v))))))
 
+;;;###autoload
+(progn
+  (defvar phpstan-replace-path-prefix)
+  (make-variable-buffer-local 'phpstan-replace-path-prefix)
+  (put 'phpstan-replace-path-prefix 'safe-local-variable
+       #'(lambda (v) (or (null v) (stringp v)))))
+
 ;; Usually it is defined dynamically by flycheck
 (defvar flycheck-phpstan-executable)
 
@@ -117,6 +124,25 @@ NIL
       (set (make-local-variable 'flycheck-phpstan-executable)
            (car phpstan-executable)))))
 
+(defun phpstan-normalize-path (source-original source)
+  "Return normalized source file path to pass by `SOURCE-ORIGINAL' OR `SOURCE'.
+
+If neither `phpstan-replace-path-prefix' nor executable docker is set,
+it returns the value of `SOURCE' as it is."
+  (let ((working-directory (expand-file-name (php-project-get-root-dir)))
+        (prefix
+         (cond
+          ((not (null phpstan-replace-path-prefix)) phpstan-replace-path-prefix)
+          ((and (consp phpstan-executable)
+                (string= "docker" (car phpstan-executable))) "/app"))))
+    (if prefix
+        (expand-file-name
+         (replace-regexp-in-string (concat "\\`" (regexp-quote working-directory))
+                                   ""
+                                   source-original t t)
+         prefix)
+      source)))
+
 (defun phpstan-get-level ()
   "Return path to phpstan configure file or `NIL'."
   (cond
@@ -151,7 +177,9 @@ NIL
               "analyze" "--errorFormat=raw" "--no-progress" "--no-interaction"
               "-c" (eval (phpstan-get-config-file))
               "-l" (eval (phpstan-get-level))
-              source)
+              (eval (phpstan-normalize-path
+                     (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace)
+                     (flycheck-save-buffer-to-temp #'flycheck-temp-file-system))))
     :working-directory (lambda (_) (php-project-get-root-dir))
     :enabled (lambda () (phpstan-get-config-file-and-set-flycheck-variable))
     :error-patterns
