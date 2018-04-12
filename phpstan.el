@@ -50,6 +50,15 @@
 
 ;;;###autoload
 (progn
+  (defvar phpstan-working-dir nil)
+  (make-variable-buffer-local 'phpstan-working-dir)
+  (put 'phpstan-working-dir 'safe-local-variable
+       #'(lambda (v) (if (consp v)
+                         (and (eq 'root (car v)) (stringp (cdr v)))
+                       (null v) (stringp v)))))
+
+;;;###autoload
+(progn
   (defvar phpstan-config-file nil)
   (make-variable-buffer-local 'phpstan-config-file)
   (put 'phpstan-config-file 'safe-local-variable
@@ -108,6 +117,23 @@ NIL
                        (or (eq 'docker v) (null v) (stringp v))))))
 
 ;; Functions:
+(defun phpstan-get-working-dir ()
+  "Return working directory of PHPStan.
+
+This is different from the project root.
+
+STRING
+     Absolute path to `phpstan' working directory.
+
+`(root . STRING)'
+     Relative path to `phpstan' working directory.
+
+NIL
+     Use (php-project-get-root-dir) as working directory."
+  (if (and phpstan-working-dir (consp phpstan-working-dir) (eq 'root (car phpstan-working-dir)))
+      (expand-file-name (cdr phpstan-working-dir) (php-project-get-root-dir))
+    (php-project-get-root-dir)))
+
 (defun phpstan-get-config-file ()
   "Return path to phpstan configure file or `NIL'."
   (if phpstan-config-file
@@ -197,7 +223,7 @@ it returns the value of `SOURCE' as it is."
               (eval (phpstan-normalize-path
                      (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace)
                      (flycheck-save-buffer-to-temp #'flycheck-temp-file-system))))
-    :working-directory (lambda (_) (php-project-get-root-dir))
+    :working-directory (lambda (_) (phpstan-get-working-dir))
     :enabled (lambda () (phpstan-get-config-file-and-set-flycheck-variable))
     :error-patterns
     ((error line-start (1+ (not (any ":"))) ":" line ":" (message) line-end))
