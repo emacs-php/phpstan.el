@@ -64,7 +64,9 @@
   (put 'phpstan-level 'safe-local-variable
        #'(lambda (v) (or (null v)
                          (integerp v)
+                         (eq 'max v)
                          (and (stringp v)
+                              (string= "max" v)
                               (string-match-p "\\`[0-9]\\'" v))))))
 
 ;;;###autoload
@@ -158,6 +160,7 @@ it returns the value of `SOURCE' as it is."
   (cond
    ((null phpstan-level) "0")
    ((integerp phpstan-level) (int-to-string phpstan-level))
+   ((symbolp phpstan-level) (symbol-name phpstan-level))
    (t phpstan-level)))
 
 (defun phpstan-get-executable ()
