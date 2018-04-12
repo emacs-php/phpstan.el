@@ -51,7 +51,7 @@
        #'(lambda (v) (or (null v)
                          (integerp v)
                          (and (stringp v)
-                              (string-match-p "\\`[1-9][0-9]*\\'" v))))))
+                              (string-match-p "\\`[0-9]\\'" v))))))
 
 ;;;###autoload
 (progn
