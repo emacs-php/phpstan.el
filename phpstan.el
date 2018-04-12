@@ -133,7 +133,7 @@ NIL
                phpstan-docker-executable
              (car phpstan-executable))))))
 
-(defun phpstan-normalize-path (source-original source)
+(defun phpstan-normalize-path (source-original &optional source)
   "Return normalized source file path to pass by `SOURCE-ORIGINAL' OR `SOURCE'.
 
 If neither `phpstan-replace-path-prefix' nor executable docker is set,
@@ -151,7 +151,7 @@ it returns the value of `SOURCE' as it is."
                                    ""
                                    source-original t t)
          prefix)
-      source)))
+      (or source source-original))))
 
 (defun phpstan-get-level ()
   "Return path to phpstan configure file or `NIL'."
@@ -189,7 +189,7 @@ it returns the value of `SOURCE' as it is."
     "PHP static analyzer based on PHPStan."
     :command ("php" (eval (phpstan-get-executable))
               "analyze" "--errorFormat=raw" "--no-progress" "--no-interaction"
-              "-c" (eval (phpstan-get-config-file))
+              "-c" (eval (phpstan-normalize-path (phpstan-get-config-file)))
               "-l" (eval (phpstan-get-level))
               (eval (phpstan-normalize-path
                      (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace)
