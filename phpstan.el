@@ -69,12 +69,26 @@
 
 ;;;###autoload
 (progn
-  (defvar phpstan-executable nil)
+  (defvar phpstan-executable nil
+    "PHPStan excutable file.
+
+STRING
+     Absolute path to `phpstan' executable file.
+
+`(root . STRING)'
+     Relative path to `phpstan' executable file.
+
+`(STRING . (ARGUMENTS ...))'
+     Command name and arguments.
+
+NIL
+     Auto detect `phpstan' executable file.")
   (make-variable-buffer-local 'phpstan-executable)
   (put 'phpstan-executable 'safe-local-variable
        #'(lambda (v) (if (consp v)
-                         (and (eq 'root (car v)) (stringp (cdr v)))
-                       (null v) (stringp v)))))
+                         (or (and (eq 'root (car v)) (stringp (cdr v)))
+                             (and (stringp (car v)) (listp (cdr v))))
+                       (or (null v) (stringp v))))))
 
 ;; Functions:
 (defun phpstan-get-config-file ()
@@ -98,15 +112,22 @@
 
 (defun phpstan-get-executable ()
   "Return PHPStan excutable file."
-  (let ((executable (or phpstan-executable '(root . "vendor/bin/phpstan"))))
-    (when (and (consp executable)
-               (eq 'root (car executable)))
-      (setq executable
-            (expand-file-name (cdr executable) (php-project-get-root-dir))))
-    (if (file-exists-p executable)
-        executable
-      (or (executable-find "phpstan")
-          (error "PHPStan executable not found")))))
+  (cond
+   ((and (consp phpstan-executable)
+         (eq 'root (car phpstan-executable)))
+    (expand-file-name (cdr phpstan-executable) (php-project-get-root-dir)))
+   ((and phpstan-flycheck-auto-set-executable
+         (listp phpstan-executable)
+         (stringp (car phpstan-executable))
+         (listp (cdr phpstan-executable)))
+    (cdr phpstan-executable))
+   ((null phpstan-executable)
+    (let ((vendor-phpstan (expand-file-name "vendor/bin/phpstan"
+                                            (php-project-get-root-dir))))
+      (cond
+       ((file-exists-p vendor-phpstan) vendor-phpstan)
+       ((executable-find "phpstan") (executable-find "phpstan"))
+       (t (error "PHPStan executable not found")))))))
 
 ;;;###autoload
 (when (featurep 'flycheck)
