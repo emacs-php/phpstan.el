@@ -34,6 +34,20 @@
 
 ;; Variables:
 
+(defgroup phpstan nil
+  "Interaface to PHPStan"
+  :tag "PHPStan"
+  :prefix "phpstan-"
+  :group 'tools
+  :group 'php
+  :link '(url-link :tag "PHPStan" "https://github.com/phpstan/phpstan")
+  :link '(url-link :tag "phpstan.el" "https://github.com/emacs-php/phpstan.el"))
+
+(defcustom phpstan-flycheck-auto-set-executable t
+  "Set flycheck phpstan-executable automatically."
+  :type 'boolean
+  :group 'phpstan)
+
 ;;;###autoload
 (progn
   (defvar phpstan-config-file nil)
