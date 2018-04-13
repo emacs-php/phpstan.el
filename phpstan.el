@@ -211,7 +211,7 @@ it returns the value of `SOURCE' as it is."
    (t phpstan-level)))
 
 (defun phpstan-get-executable ()
-  "Return PHPStan excutable file."
+  "Return PHPStan excutable file and arguments."
   (cond
    ((eq 'docker phpstan-executable)
     (list "run" "--rm" "-v"
@@ -229,18 +229,27 @@ it returns the value of `SOURCE' as it is."
     (let ((vendor-phpstan (expand-file-name "vendor/bin/phpstan"
                                             (php-project-get-root-dir))))
       (cond
-       ((file-exists-p vendor-phpstan) vendor-phpstan)
-       ((executable-find "phpstan") (executable-find "phpstan"))
+       ((file-exists-p vendor-phpstan) (list vendor-phpstan))
+       ((executable-find "phpstan") (list (executable-find "phpstan")))
        (t (error "PHPStan executable not found")))))))
+
+(defun phpstan-get-command-args ()
+  "Return command line argument for PHPStan."
+  (let ((executable (phpstan-get-executable))
+        (args (list "analyze" "--errorFormat=raw" "--no-progress" "--no-interaction"))
+        (path (phpstan-normalize-path (phpstan-get-config-file)))
+        (level (phpstan-get-level)))
+    (when path
+      (setq args (append args (list "-c" path))))
+    (when level
+      (setq args (append args (list "-l" level))))
+    (append executable args)))
 
 ;;;###autoload
 (when (featurep 'flycheck)
   (flycheck-define-checker phpstan
     "PHP static analyzer based on PHPStan."
-    :command ("php" (eval (phpstan-get-executable))
-              "analyze" "--errorFormat=raw" "--no-progress" "--no-interaction"
-              "-c" (eval (phpstan-normalize-path (phpstan-get-config-file)))
-              "-l" (eval (phpstan-get-level))
+    :command ("php" (eval (phpstan-get-command-args))
               (eval (phpstan-normalize-path
                      (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace)
                      (flycheck-save-buffer-to-temp #'flycheck-temp-file-system))))
