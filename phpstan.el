@@ -166,20 +166,21 @@ NIL
                if dir
                return (expand-file-name name dir)))))
 
-(defun phpstan-get-config-file-and-set-flycheck-variable ()
+(defun phpstan-enabled-and-set-flycheck-variable ()
   "Return path to phpstan configure file, and set buffer execute in side effect."
-  (prog1 (phpstan-get-config-file)
-    (when (and phpstan-flycheck-auto-set-executable
-               (not (and (boundp 'flycheck-phpstan-executable)
-                         (symbol-value 'flycheck-phpstan-executable)))
-               (or (eq 'docker phpstan-executable)
-                   (and (consp phpstan-executable)
-                        (stringp (car phpstan-executable))
-                        (listp (cdr phpstan-executable)))))
-      (set (make-local-variable 'flycheck-phpstan-executable)
-           (if (eq 'docker phpstan-executable)
-               phpstan-docker-executable
-             (car phpstan-executable))))))
+  (let ((enabled (not (null (or phpstan-working-dir (phpstan-get-config-file))))))
+    (prog1 enabled
+      (when (and phpstan-flycheck-auto-set-executable
+                 (not (and (boundp 'flycheck-phpstan-executable)
+                           (symbol-value 'flycheck-phpstan-executable)))
+                 (or (eq 'docker phpstan-executable)
+                     (and (consp phpstan-executable)
+                          (stringp (car phpstan-executable))
+                          (listp (cdr phpstan-executable)))))
+        (set (make-local-variable 'flycheck-phpstan-executable)
+             (if (eq 'docker phpstan-executable)
+                 phpstan-docker-executable
+               (car phpstan-executable)))))))
 
 (defun phpstan-normalize-path (source-original &optional source)
   "Return normalized source file path to pass by `SOURCE-ORIGINAL' OR `SOURCE'.
@@ -244,7 +245,7 @@ it returns the value of `SOURCE' as it is."
                      (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace)
                      (flycheck-save-buffer-to-temp #'flycheck-temp-file-system))))
     :working-directory (lambda (_) (phpstan-get-working-dir))
-    :enabled (lambda () (phpstan-get-config-file-and-set-flycheck-variable))
+    :enabled (lambda () (phpstan-enabled-and-set-flycheck-variable))
     :error-patterns
     ((error line-start (1+ (not (any ":"))) ":" line ":" (message) line-end))
     :modes (php-mode)
