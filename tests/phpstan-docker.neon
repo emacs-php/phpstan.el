@@ -1,0 +1,2 @@
+parameters:
+        bootstrap: %currentWorkingDirectory%/../app/tests/bootstrap.php

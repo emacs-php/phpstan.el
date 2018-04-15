@@ -1,2 +1,98 @@
 * phpstan.el
 Emacs interface to [[https://github.com/phpstan/phpstan][PHPStan]], includes checker for [[http://www.flycheck.org/en/latest/][Flycheck]].
+** Support version
+- Emacs 24+
+- PHPStan latest/dev-master (NOT support 0.9 seriese)
+** How to install
+*** Install from MELPA
+/TBD/
+** How to use
+*** For Flycheck user
+/TBD/
+*** For Flymake user
+The function for flymake will be implemented soon.  You do not have to depend on flycheck.
+*** Using Docker (phpstan/docker-image)
+Install [[https://www.docker.com/community-edition][Docker CE]] and [[https://github.com/phpstan/docker-image][phpstan/docker-image]](latest).
+
+If you always use Docker for PHPStan, add the following into your ~.emacs~ file (~~/.emacs.d/init.el~)
+#+BEGIN_SRC emacs-lisp
+(setq-default phpstan-executable 'docker)
+#+END_SRC
+
+Put the following into ~.dir-locals.el~ files on the root directory of project.
+#+BEGIN_SRC emacs-lisp
+((nil . ((php-project-root . git)
+         (phpstan-executable . docker)
+         (phpstan-working-dir . (root . "path/to/dir"))
+         (phpstan-config-file . (root . "path/to/dir/phpstan-docker.neon"))
+         (phpstan-level . 7))))
+#+END_SRC
+
+*** Using composer (project specific)
+If your project Composer relies on phpstan, you do not need to set anything.
+#+BEGIN_SRC emacs-lisp
+((nil . ((php-project-root . git)
+         (phpstan-executable . docker)
+         (phpstan-working-dir . (root . "path/to/dir"))
+         (phpstan-config-file . (root . "path/to/dir/phpstan-docker.neon"))
+         (phpstan-level . 7))))
+#+END_SRC
+*** Using PHAR archive
+*NOTICE*: ~phpstan.el~ is incompatible with the [[https://github.com/phpstan/phpstan/releases][released versions]] of PHPStan.  It will probably be distributed in the form of the Phar archive when the current development version is officially released in the near future.
+
+If you want to use the Phar archive you built yourself, set the Phar archive path to phpstan-executable.
+
+** Settings
+Variables for phpstan are mainly controlled by [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html][directory variables]] (~.dir-locals.el~).
+
+Frequently ~(root. "path/to/file")~ notation appears in these variables.  It is relative to the top level directory of the project.  In general, the directory containing one of ~.projectile~, ~composer.json~, ~.git~ file (or directory) is at the top level.
+
+Please be aware that the root directory of the PHP project may *NOT* match either of PHPStan's ~%rootDir%~ and/or ~%currentWorkingDirectory%~.
+
+Typically, you would set the following ~.dir-locals.el~.
+
+#+BEGIN_SRC emacs-lisp
+((nil . ((php-project-root . auto)
+         (phpstan-executable . docker)
+         (phpstan-working-dir . (root . "path/to/dir/"))
+         (phpstan-config-file . (root . "path/to/dir/phpstan-custom.neon"))
+         (phpstan-level . max))))
+#+END_SRC
+
+If there is a ~phpstan.neon~ file in the root directory of the project, you do not need to set both ~phpstan-working-dir~ and ~phpstan-config-file~.
+
+** API
+Most variables defined in this package are buffer local.  If you want to set it for multiple projects, use [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Default-Value.html][setq-default]].
+
+*** Local variable ~phpstan-working-dir~
+Path to working directory of PHPStan.
+
+- STRING :: Absolute path to `phpstan' working directory.
+            - ex) ~"/path/to/phpstan.phar"~
+- ~(root . STRING)~ :: Relative path to `phpstan' working directory from project root directory.
+            - ex) ~(root . "path/to/dir")~
+- ~nil~ :: Use ~(php-project-get-root-dir)~ as working directory.
+
+*** Local variable ~phpstan-config-file~
+Path to project specific configuration file of PHPStan.
+
+- STRING :: Absolute path to ~phpstan~ configuration file.
+- ~(root . STRING)~ :: Relative path to ~phpstan~ configuration file from project root directory.
+- NIL :: Search ~phpstan.neon(.dist)~ in ~(phpstan-get-working-dir)~.
+
+*** Local variable ~phpstan-level~
+Rule level of PHPStan analysis.  Please see [[https://github.com/phpstan/phpstan/blob/master/README.md#rule-levels][README #Rule levels of PHPStan]].
+~0~ is the loosest and you can also use ~max~ as an alias for the highest level.  Default level is ~0~.
+
+*** Local variable ~phpstan-executable~
+- STRING :: Absolute path to `phpstan' executable file.
+            - ex) ~"/path/to/phpstan.phar"~
+- SYMBOL ~docker~ ::  Use Docker using phpstan/docker-image.
+- ~(root . STRING)~ ::  Relative path to `phpstan' executable file from project root directory.
+     - ex) ~(root . "script/phpstan")~
+- ~(STRING . (ARGUMENTS ...))~ :: Command name and arguments.
+     - ex) ~("docker" "run" "--rm" "-v" "/path/to/project-dir/:/app" "your/docker-image")~
+- ~nil~ :: Auto detect ~phpstan~ executable file by composer dependencies of the project or executable command in ~PATH~ environment variable.
+
+*** Custom variable ~phpstan-flycheck-auto-set-executable~
+Set flycheck phpstan-executable automatically when non-NIL.

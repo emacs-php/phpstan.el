@@ -3,4 +3,5 @@
 
 (package-file "phpstan.el")
 (development
- (depends-on "flycheck"))
+ (depends-on "flycheck")
+ (depends-on "php-mode"))
