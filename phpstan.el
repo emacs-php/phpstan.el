@@ -169,11 +169,11 @@ If neither `phpstan-replace-path-prefix' nor executable docker is set,
 it returns the value of `SOURCE' as it is."
   (let ((root-directory (expand-file-name (php-project-get-root-dir)))
         (prefix
-         (cond
-          ((not (null phpstan-replace-path-prefix)) phpstan-replace-path-prefix)
-          ((eq 'docker phpstan-executable) "/app")
-          ((and (consp phpstan-executable)
-                (string= "docker" (car phpstan-executable))) "/app"))))
+         (or phpstan-replace-path-prefix
+             (cond
+              ((eq 'docker phpstan-executable) "/app")
+              ((and (consp phpstan-executable)
+                    (string= "docker" (car phpstan-executable))) "/app")))))
     (if prefix
         (expand-file-name
          (replace-regexp-in-string (concat "\\`" (regexp-quote root-directory))
