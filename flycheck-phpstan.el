@@ -1,4 +1,4 @@
-;;; phpstan-flycheck.el --- Flycheck integration for PHPStan  -*- lexical-binding: t; -*-
+;;; flycheck-phpstan.el --- Flycheck integration for PHPStan  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2018  Friends of Emacs-PHP development
 
@@ -7,7 +7,7 @@
 ;; Version: 0.1.0
 ;; Keywords: convenience, php
 ;; Homepage: https://github.com/emacs-php/phpstan.el
-;; Package-Requires: ((emacs "24") (flycheck "26"))
+;; Package-Requires: ((emacs "24") (flycheck "26") (phpstan "0.1.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 ;; Usually it is defined dynamically by flycheck
 (defvar flycheck-phpstan-executable)
 
-(defun phpstan-flycheck--enabled-and-set-variable ()
+(defun flycheck-phpstan--enabled-and-set-variable ()
   "Return path to phpstan configure file, and set buffer execute in side effect."
   (let ((enabled (not (null (or phpstan-working-dir (phpstan-get-config-file))))))
     (prog1 enabled
@@ -57,11 +57,11 @@
                    (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace)
                    (flycheck-save-buffer-to-temp #'flycheck-temp-file-system))))
   :working-directory (lambda (_) (phpstan-get-working-dir))
-  :enabled (lambda () (phpstan-flycheck--enabled-and-set-variable))
+  :enabled (lambda () (flycheck-phpstan--enabled-and-set-variable))
   :error-patterns
   ((error line-start (1+ (not (any ":"))) ":" line ":" (message) line-end))
   :modes (php-mode)
   :next-checkers (php))
 
-(provide 'phpstan-flycheck)
-;;; phpstan-flycheck.el ends here
+(provide 'flycheck-phpstan)
+;;; flycheck-phpstan.el ends here
