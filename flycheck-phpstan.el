@@ -49,7 +49,6 @@
                  phpstan-docker-executable
                (car phpstan-executable)))))))
 
-;;;###autoload
 (flycheck-define-checker phpstan
   "PHP static analyzer based on PHPStan."
   :command ("php" (eval (phpstan-get-command-args))
