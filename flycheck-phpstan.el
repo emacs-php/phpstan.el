@@ -62,5 +62,7 @@
   :modes (php-mode)
   :next-checkers (php))
 
+(add-to-list 'flycheck-checkers 'phpstan t)
+
 (provide 'flycheck-phpstan)
 ;;; flycheck-phpstan.el ends here
