@@ -1,14 +1,28 @@
 * phpstan.el
+#+BEGIN_HTML
+<a href="http://melpa.org/#/phpstan"><img alt="MELPA: phpstan" src="http://melpa.org/packages/phpstan-badge.svg"></a>
+<a href="http://stable.melpa.org/#/phpstan"><img alt="MELPA stable: phpstan" src="http://stable.melpa.org/packages/phpstan-badge.svg"></a>
+#+END_HTML
 Emacs interface to [[https://github.com/phpstan/phpstan][PHPStan]], includes checker for [[http://www.flycheck.org/en/latest/][Flycheck]].
 ** Support version
 - Emacs 24+
 - PHPStan latest/dev-master (NOT support 0.9 seriese)
 ** How to install
 *** Install from MELPA
-/TBD/
+ 1. If you have not set up MELPA, see [[https://melpa.org/#/getting-started][Getting Started - MELPA]].
+ 2. ~M-x package-install flycheck-phpstan~
 ** How to use
 *** For Flycheck user
-/TBD/
+#+BEGIN_SRC emacs-lisp
+(defun my-php-mode-hook ()
+  "My PHP-mode hook."
+  (require 'flycheck-phpstan)
+  (flycheck-mode t)
+  (flycheck-select-checker 'phpstan))
+
+(add-hook 'php-mode-hook 'my-php-mode-hook)
+#+END_SRC
+
 *** For Flymake user
 The function for flymake will be implemented soon.  You do not have to depend on flycheck.
 *** Using Docker (phpstan/docker-image)
