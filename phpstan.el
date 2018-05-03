@@ -218,6 +218,7 @@ it returns the value of `SOURCE' as it is."
 (defun phpstan-get-executable ()
   "Return PHPStan excutable file and arguments."
   (cond
+   ((file-exists-p phpstan-executable) (list phpstan-executable))
    ((eq 'docker phpstan-executable)
     (list "run" "--rm" "-v"
           (concat (expand-file-name (php-project-get-root-dir)) ":/app")
