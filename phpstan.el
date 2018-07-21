@@ -224,7 +224,8 @@ it returns the value of `SOURCE' as it is."
           "phpstan/phpstan"))
    ((and (consp phpstan-executable)
          (eq 'root (car phpstan-executable)))
-    (expand-file-name (cdr phpstan-executable) (php-project-get-root-dir)))
+    (list
+     (expand-file-name (cdr phpstan-executable) (php-project-get-root-dir))))
    ((and (stringp phpstan-executable) (file-exists-p phpstan-executable))
     (list phpstan-executable))
    ((and phpstan-flycheck-auto-set-executable
