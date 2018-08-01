@@ -52,10 +52,9 @@ If your project Composer relies on phpstan, you do not need to set anything.
          (phpstan-level . 7))))
 #+END_SRC
 *** Using PHAR archive
-*NOTICE*: ~phpstan.el~ is incompatible with the [[https://github.com/phpstan/phpstan/releases][released versions]] of PHPStan.  It will probably be distributed in the form of the Phar archive when the current development version is officially released in the near future.
+*NOTICE*: ~phpstan.el~ requires PHPStan **0.10+**.
 
-If you want to use the Phar archive you built yourself, set the Phar archive path to phpstan-executable.
-
+Please download ~phpstan.phar~ from [[https://github.com/phpstan/phpstan/releases][Releases · phpstan/phpstan]].
 ** Settings
 Variables for phpstan are mainly controlled by [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Directory-Variables.html][directory variables]] (~.dir-locals.el~).
 
