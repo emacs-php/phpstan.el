@@ -7,6 +7,7 @@ Emacs interface to [[https://github.com/phpstan/phpstan][PHPStan]], includes che
 ** Support version
 - Emacs 24+
 - PHPStan latest/dev-master (NOT support 0.9 seriese)
+- PHP 7.1+ or Docker runtime
 ** How to install
 *** Install from MELPA
  1. If you have not set up MELPA, see [[https://melpa.org/#/getting-started][Getting Started - MELPA]].
