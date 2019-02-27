@@ -33,8 +33,7 @@
 ;; Please read the README for these details.
 ;; https://github.com/emacs-php/phpstan.el/blob/master/README.org
 ;;
-;; If you are a Flycheck user, activate it by selecting `phpstan`
-;; with `M-x flycheck-select-checker'.
+;; If you are a Flycheck user, install `flycheck-phpstan' package.
 ;;
 ;; ## Directory local variables
 ;;

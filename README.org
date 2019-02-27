@@ -15,13 +15,12 @@ Emacs interface to [[https://github.com/phpstan/phpstan][PHPStan]], includes che
 ** How to use
 *** For Flycheck user
 #+BEGIN_SRC emacs-lisp
-(defun my-php-mode-hook ()
+(defun my-php-mode-setup ()
   "My PHP-mode hook."
   (require 'flycheck-phpstan)
-  (flycheck-mode t)
-  (flycheck-select-checker 'phpstan))
+  (flycheck-mode t))
 
-(add-hook 'php-mode-hook 'my-php-mode-hook)
+(add-hook 'php-mode-hook 'my-php-mode-setup)
 #+END_SRC
 
 *** For Flymake user
