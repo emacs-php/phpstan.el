@@ -181,10 +181,12 @@ NIL
           (expand-file-name (cdr phpstan-config-file) (php-project-get-root-dir))
         phpstan-config-file)
     (let ((working-directory (phpstan-get-working-dir)))
-      (cl-loop for name in '("phpstan.neon" "phpstan.neon.dist")
-               for dir  = (locate-dominating-file working-directory name)
-               if dir
-               return (expand-file-name name dir)))))
+      (if working-directory
+          nil
+        (cl-loop for name in '("phpstan.neon" "phpstan.neon.dist")
+                 for dir  = (locate-dominating-file working-directory name)
+                 if dir
+                 return (expand-file-name name dir))))))
 
 (defun phpstan-normalize-path (source-original &optional source)
   "Return normalized source file path to pass by `SOURCE-ORIGINAL' OR `SOURCE'.
