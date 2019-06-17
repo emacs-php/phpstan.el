@@ -46,7 +46,7 @@
 
 (defun flycheck-phpstan--enabled-and-set-variable ()
   "Return path to phpstan configure file, and set buffer execute in side effect."
-  (let ((enabled (not (null (or phpstan-working-dir (phpstan-get-config-file))))))
+  (let ((enabled (and (phpstan-get-working-dir) (phpstan-get-config-file))))
     (prog1 enabled
       (when (and phpstan-flycheck-auto-set-executable
                  (not (and (boundp 'flycheck-phpstan-executable)
