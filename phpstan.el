@@ -181,8 +181,7 @@ NIL
           (expand-file-name (cdr phpstan-config-file) (php-project-get-root-dir))
         phpstan-config-file)
     (let ((working-directory (phpstan-get-working-dir)))
-      (if working-directory
-          nil
+      (when working-directory
         (cl-loop for name in '("phpstan.neon" "phpstan.neon.dist")
                  for dir  = (locate-dominating-file working-directory name)
                  if dir
