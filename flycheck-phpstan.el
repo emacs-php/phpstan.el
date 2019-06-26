@@ -70,7 +70,7 @@
   :enabled (lambda () (flycheck-phpstan--enabled-and-set-variable))
   :error-patterns
   ((error line-start (1+ (not (any ":"))) ":" line ":" (message) line-end))
-  :modes (php-mode))
+  :modes (php-mode phps-mode))
 
 (add-to-list 'flycheck-checkers 'phpstan t)
 (flycheck-add-next-checker 'php 'phpstan)
