@@ -1,13 +1,13 @@
 ;;; flycheck-phpstan.el --- Flycheck integration for PHPStan  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2019  Friends of Emacs-PHP development
+;; Copyright (C) 2020  Friends of Emacs-PHP development
 
 ;; Author: USAMI Kenta <tadsan@zonu.me>
 ;; Created: 15 Mar 2018
-;; Version: 0.3.1
+;; Version: 0.3.2
 ;; Keywords: convenience, php
 ;; Homepage: https://github.com/emacs-php/phpstan.el
-;; Package-Requires: ((emacs "24.3") (flycheck "26") (phpstan "0.2.1"))
+;; Package-Requires: ((emacs "24.3") (flycheck "26") (phpstan "0.3.2"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -35,7 +35,6 @@
 ;;
 ;;     (add-hook 'php-mode-hook 'my-php-mode-setup)
 ;;
-
 
 ;;; Code:
 (require 'flycheck)
