@@ -120,7 +120,10 @@ INTEGER or STRING
      Number of PHPStan rule level.
 
 max
-     The highest of PHPStan rule level.")
+     The highest of PHPStan rule level.
+
+NIL
+     Use rule level specified in `phpstan' configuration file.")
   (make-variable-buffer-local 'phpstan-level)
   (put 'phpstan-level 'safe-local-variable
        #'(lambda (v) (or (null v)
@@ -210,7 +213,7 @@ it returns the value of `SOURCE' as it is."
 (defun phpstan-get-level ()
   "Return path to phpstan configure file or `NIL'."
   (cond
-   ((null phpstan-level) "0")
+   ((null phpstan-level) nil)
    ((integerp phpstan-level) (int-to-string phpstan-level))
    ((symbolp phpstan-level) (symbol-name phpstan-level))
    (t phpstan-level)))
