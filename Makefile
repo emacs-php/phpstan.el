@@ -8,7 +8,7 @@ ELCS = $(ELS:.el=.elc)
 	$(EMACS) -Q -batch -L . -f package-initialize -f batch-byte-compile $<
 
 .cask: Cask
-	CASK
+	$(CASK)
 
 all: clean autoloads $(ELCS)
 
