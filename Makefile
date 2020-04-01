@@ -1,6 +1,6 @@
 EMACS ?= emacs
 CASK ?= cask
-ELS = phpstan.el flycheck-phpstan.el
+ELS = phpstan.el flycheck-phpstan.el flymake-phpstan.el
 AUTOLOADS = phpstan-autoloads.el
 ELCS = $(ELS:.el=.elc)
 
