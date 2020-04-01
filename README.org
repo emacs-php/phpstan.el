@@ -24,7 +24,10 @@ Emacs interface to [[https://github.com/phpstan/phpstan][PHPStan]], includes che
 #+END_SRC
 
 *** For Flymake user
-The function for flymake will be implemented soon.  You do not have to depend on flycheck.
+#+BEGIN_SRC emacs-lisp
+(add-hook 'php-mode-hook #'flymake-phpstan-turn-on)
+#+END_SRC
+
 *** Using Docker (phpstan/docker-image)
 Install [[https://www.docker.com/get-started][Docker]] and [[https://hub.docker.com/r/phpstan/phpstan][phpstan/phpstan image]].
 
