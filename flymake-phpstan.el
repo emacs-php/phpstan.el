@@ -36,6 +36,8 @@
 ;;; Code:
 (require 'flymake)
 (require 'phpstan)
+(eval-when-compile
+  (require 'pcase))
 
 (defgroup flymake-phpstan nil
   "Flymake backend for PHP using PHPStan."
@@ -57,30 +59,30 @@
      :command command-args
      :sentinel
      (lambda (proc _event)
-       (case (process-status proc))
-       ((exit)
-        (unwind-protect
-            (when (with-current-buffer source (eq proc flymake-phpstan--proc))
-              (with-current-buffer (process-buffer proc)
-                (goto-char (point-min))
-                (cl-loop
-                 while (search-forward-regexp
-                        (eval-when-compile
-                          (rx line-start (1+ (not (any ":"))) ":"
-                              (group-n 1 (one-or-more digit)) ":"
-                              (group-n 2 (one-or-more not-newline)) line-end))
-                        nil t)
-                 for msg = (match-string 2)
-                 for (beg . end) = (flymake-diag-region
-                                    source
-                                    (string-to-number (match-string 1)))
-                 for type = :warning
-                 collect (flymake-make-diagnostic source beg end type msg)
-                 into diags
-                 finally (funcall report-fn diags)))
-              (flymake-log :warning "Canceling obsolete check %s" proc))
-          (kill-buffer (process-buffer proc))))
-       (user-error "PHPStan error")))))
+       (pcase (process-status proc)
+         (`exit
+          (unwind-protect
+              (when (with-current-buffer source (eq proc flymake-phpstan--proc))
+                (with-current-buffer (process-buffer proc)
+                  (goto-char (point-min))
+                  (cl-loop
+                   while (search-forward-regexp
+                          (eval-when-compile
+                            (rx line-start (1+ (not (any ":"))) ":"
+                                (group-n 1 (one-or-more digit)) ":"
+                                (group-n 2 (one-or-more not-newline)) line-end))
+                          nil t)
+                   for msg = (match-string 2)
+                   for (beg . end) = (flymake-diag-region
+                                      source
+                                      (string-to-number (match-string 1)))
+                   for type = :warning
+                   collect (flymake-make-diagnostic source beg end type msg)
+                   into diags
+                   finally (funcall report-fn diags)))
+                (flymake-log :warning "Canceling obsolete check %s" proc))
+            (kill-buffer (process-buffer proc))))
+         (code (user-error "PHPStan error (exit status: %d)" code)))))))
 
 (defun flymake-phpstan (report-fn &rest _ignored-args)
   "Flymake backend for PHPStan report using REPORT-FN."
