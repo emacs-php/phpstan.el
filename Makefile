@@ -4,8 +4,12 @@ ELS = phpstan.el flycheck-phpstan.el flymake-phpstan.el
 AUTOLOADS = phpstan-autoloads.el
 ELCS = $(ELS:.el=.elc)
 
-%.elc: .cask %.el
-	$(EMACS) -Q -batch -L . -f package-initialize -f batch-byte-compile $<
+.el.elc: .cask
+	$(EMACS) -Q -batch -L . --eval \
+	"(let ((default-directory (expand-file-name \".cask\" default-directory))) \
+	   (require 'package) \
+	   (normal-top-level-add-subdirs-to-load-path))" \
+	-f package-initialize -f batch-byte-compile $<
 
 .cask: Cask
 	$(CASK)
