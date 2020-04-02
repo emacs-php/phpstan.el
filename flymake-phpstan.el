@@ -98,6 +98,7 @@
         (process-send-region flymake-phpstan--proc (point-min) (point-max))
         (process-send-eof flymake-phpstan--proc)))))
 
+;;;###autoload
 (defun flymake-phpstan-turn-on ()
   "Enable flymake-phpstan as buffer-local Flymake backend."
   (interactive)
