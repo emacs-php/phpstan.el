@@ -83,7 +83,7 @@
                    finally (funcall report-fn diags)))
                 (flymake-log :warning "Canceling obsolete check %s" proc))
             (kill-buffer (process-buffer proc))))
-         (code (user-error "PHPStan error (exit status: %d)" code)))))))
+         (code (user-error "PHPStan error (exit status: %s)" code)))))))
 
 (defun flymake-phpstan (report-fn &rest _ignored-args)
   "Flymake backend for PHPStan report using REPORT-FN."
