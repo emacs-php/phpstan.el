@@ -70,7 +70,7 @@
                    while (search-forward-regexp
                           (eval-when-compile
                             (rx line-start (1+ (not (any ":"))) ":"
-                                (group-n 1 (one-or-more digit)) ":"
+                                (group-n 1 (one-or-more (not (any ":")))) ":"
                                 (group-n 2 (one-or-more not-newline)) line-end))
                           nil t)
                    for msg = (match-string 2)
