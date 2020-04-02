@@ -94,7 +94,7 @@
     (let ((source (current-buffer)))
       (save-restriction
         (widen)
-        (setq flymake-phpstan--proc (flymake-phpstan-make-process (php-project-root) command-args report-fn source))
+        (setq flymake-phpstan--proc (flymake-phpstan-make-process (php-project-get-root-dir) command-args report-fn source))
         (process-send-region flymake-phpstan--proc (point-min) (point-max))
         (process-send-eof flymake-phpstan--proc)))))
 
