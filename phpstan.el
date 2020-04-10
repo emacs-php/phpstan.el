@@ -200,6 +200,13 @@ NIL
    ((stringp phpstan-working-dir) phpstan-working-dir)
    (t (php-project-get-root-dir))))
 
+(defun phpstan-enabled ()
+  "Return non-NIL if PHPStan configured or Composer detected."
+  (or (phpstan-get-config-file)
+      (phpstan-get-autoload-file)
+      (and phpstan-enable-on-no-config-file
+           (php-project-get-root-dir))))
+
 (defun phpstan-get-config-file ()
   "Return path to phpstan configure file or `NIL'."
   (if phpstan-config-file
