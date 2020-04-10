@@ -119,6 +119,24 @@ NIL
 
 ;;;###autoload
 (progn
+  (defvar-local phpstan-autoload-file nil
+    "Path to autoload file for PHPStan.
+
+STRING
+     Path to `phpstan' autoload file.
+
+`(root . STRING)'
+     Relative path to `phpstan' configuration file from project root directory.
+
+NIL
+     If `phpstan-enable-on-no-config-file', search \"vendor/autoload.php\" in (phpstan-get-working-dir).")
+  (put 'phpstan-autoload-file 'safe-local-variable
+       #'(lambda (v) (if (consp v)
+                         (and (eq 'root (car v)) (stringp (cdr v)))
+                       (null v) (stringp v)))))
+
+;;;###autoload
+(progn
   (defvar-local phpstan-level nil
     "Rule level of PHPStan.
 
@@ -196,6 +214,14 @@ NIL
                  for dir  = (locate-dominating-file working-directory name)
                  if dir
                  return (expand-file-name name dir))))))
+
+(defun phpstan-get-autoload-file ()
+  "Return path to autoload file or NIL."
+  (when phpstan-autoload-file
+    (if (and (consp phpstan-autoload-file)
+             (eq 'root (car phpstan-autoload-file)))
+        (expand-file-name (cdr phpstan-autoload-file) (php-project-get-root-dir))
+      phpstan-autoload-file)))
 
 (defun phpstan-normalize-path (source-original &optional source)
   "Return normalized source file path to pass by `SOURCE-ORIGINAL' OR `SOURCE'.
