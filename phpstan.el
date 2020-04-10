@@ -171,9 +171,11 @@ NIL
 ;; Functions:
 (defun phpstan-get-working-dir ()
   "Return path to working directory of PHPStan."
-  (if (and phpstan-working-dir (consp phpstan-working-dir) (eq 'root (car phpstan-working-dir)))
-      (expand-file-name (cdr phpstan-working-dir) (php-project-get-root-dir))
-    (php-project-get-root-dir)))
+  (cond
+   ((and phpstan-working-dir (consp phpstan-working-dir) (eq 'root (car phpstan-working-dir)))
+    (expand-file-name (cdr phpstan-working-dir) (php-project-get-root-dir)))
+   ((stringp phpstan-working-dir) phpstan-working-dir)
+   (t (php-project-get-root-dir))))
 
 (defun phpstan-get-config-file ()
   "Return path to phpstan configure file or `NIL'."
