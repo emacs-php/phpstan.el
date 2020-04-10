@@ -114,7 +114,7 @@ NIL
 
 ;;;###autoload
 (progn
-  (defvar phpstan-level "0"
+  (defvar-local phpstan-level nil
     "Rule level of PHPStan.
 
 INTEGER or STRING
@@ -125,7 +125,6 @@ max
 
 NIL
      Use rule level specified in `phpstan' configuration file.")
-  (make-variable-buffer-local 'phpstan-level)
   (put 'phpstan-level 'safe-local-variable
        #'(lambda (v) (or (null v)
                          (integerp v)
