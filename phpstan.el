@@ -287,14 +287,15 @@ it returns the value of `SOURCE' as it is."
 (defun phpstan-get-command-args ()
   "Return command line argument for PHPStan."
   (let ((executable (phpstan-get-executable))
-        (args (list "analyze" "--error-format=raw" "--no-progress" "--no-interaction"))
         (path (phpstan-normalize-path (phpstan-get-config-file)))
+        (autoload (phpstan-get-autoload-file))
         (level (phpstan-get-level)))
-    (when path
-      (setq args (append args (list "-c" path))))
-    (when level
-      (setq args (append args (list "-l" level))))
-    (append executable args)))
+    (append executable
+            (list "analyze" "--error-format=raw" "--no-progress" "--no-interaction")
+            (and path (list "-c" path))
+            (and autoload (list "-a" autoload))
+            (and level (list "-l" level))
+            (list "--"))))
 
 (provide 'phpstan)
 ;;; phpstan.el ends here
