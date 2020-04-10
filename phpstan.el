@@ -72,6 +72,11 @@
   :type 'boolean
   :group 'phpstan)
 
+(defcustom phpstan-enable-on-no-config-file t
+  "If T, activate configuration from composer even when `phpstan.neon' is not found."
+  :type 'boolean
+  :group 'phpstan)
+
 ;;;###autoload
 (progn
   (defvar phpstan-working-dir nil
