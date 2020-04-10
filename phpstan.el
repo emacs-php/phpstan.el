@@ -72,6 +72,11 @@
   :type 'boolean
   :group 'phpstan)
 
+(defcustom phpstan-enable-on-no-config-file t
+  "If T, activate configuration from composer even when `phpstan.neon' is not found."
+  :type 'boolean
+  :group 'phpstan)
+
 ;;;###autoload
 (progn
   (defvar phpstan-working-dir nil
@@ -108,6 +113,24 @@ NIL
      Search phpstan.neon(.dist) in (phpstan-get-working-dir).")
   (make-variable-buffer-local 'phpstan-config-file)
   (put 'phpstan-config-file 'safe-local-variable
+       #'(lambda (v) (if (consp v)
+                         (and (eq 'root (car v)) (stringp (cdr v)))
+                       (null v) (stringp v)))))
+
+;;;###autoload
+(progn
+  (defvar-local phpstan-autoload-file nil
+    "Path to autoload file for PHPStan.
+
+STRING
+     Path to `phpstan' autoload file.
+
+`(root . STRING)'
+     Relative path to `phpstan' configuration file from project root directory.
+
+NIL
+     If `phpstan-enable-on-no-config-file', search \"vendor/autoload.php\" in (phpstan-get-working-dir).")
+  (put 'phpstan-autoload-file 'safe-local-variable
        #'(lambda (v) (if (consp v)
                          (and (eq 'root (car v)) (stringp (cdr v)))
                        (null v) (stringp v)))))
@@ -177,6 +200,13 @@ NIL
    ((stringp phpstan-working-dir) phpstan-working-dir)
    (t (php-project-get-root-dir))))
 
+(defun phpstan-enabled ()
+  "Return non-NIL if PHPStan configured or Composer detected."
+  (or (phpstan-get-config-file)
+      (phpstan-get-autoload-file)
+      (and phpstan-enable-on-no-config-file
+           (php-project-get-root-dir))))
+
 (defun phpstan-get-config-file ()
   "Return path to phpstan configure file or `NIL'."
   (if phpstan-config-file
@@ -191,6 +221,14 @@ NIL
                  for dir  = (locate-dominating-file working-directory name)
                  if dir
                  return (expand-file-name name dir))))))
+
+(defun phpstan-get-autoload-file ()
+  "Return path to autoload file or NIL."
+  (when phpstan-autoload-file
+    (if (and (consp phpstan-autoload-file)
+             (eq 'root (car phpstan-autoload-file)))
+        (expand-file-name (cdr phpstan-autoload-file) (php-project-get-root-dir))
+      phpstan-autoload-file)))
 
 (defun phpstan-normalize-path (source-original &optional source)
   "Return normalized source file path to pass by `SOURCE-ORIGINAL' OR `SOURCE'.
@@ -249,14 +287,15 @@ it returns the value of `SOURCE' as it is."
 (defun phpstan-get-command-args ()
   "Return command line argument for PHPStan."
   (let ((executable (phpstan-get-executable))
-        (args (list "analyze" "--error-format=raw" "--no-progress" "--no-interaction"))
         (path (phpstan-normalize-path (phpstan-get-config-file)))
+        (autoload (phpstan-get-autoload-file))
         (level (phpstan-get-level)))
-    (when path
-      (setq args (append args (list "-c" path))))
-    (when level
-      (setq args (append args (list "-l" level))))
-    (append executable args)))
+    (append executable
+            (list "analyze" "--error-format=raw" "--no-progress" "--no-interaction")
+            (and path (list "-c" path))
+            (and autoload (list "-a" autoload))
+            (and level (list "-l" level))
+            (list "--"))))
 
 (provide 'phpstan)
 ;;; phpstan.el ends here

@@ -104,7 +104,7 @@
 (defun flymake-phpstan-turn-on ()
   "Enable flymake-phpstan as buffer-local Flymake backend."
   (interactive)
-  (let ((enabled (or phpstan-working-dir (phpstan-get-config-file))))
+  (let ((enabled (phpstan-enabled)))
     (when enabled
       (flymake-mode 1)
       (when flymake-phpstan-disable-c-mode-hooks
