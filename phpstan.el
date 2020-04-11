@@ -202,10 +202,11 @@ NIL
 
 (defun phpstan-enabled ()
   "Return non-NIL if PHPStan configured or Composer detected."
-  (or (phpstan-get-config-file)
-      (phpstan-get-autoload-file)
-      (and phpstan-enable-on-no-config-file
-           (php-project-get-root-dir))))
+  (and (not (file-remote-p default-directory)) ;; Not support remote filesystem
+       (or (phpstan-get-config-file)
+           (phpstan-get-autoload-file)
+           (and phpstan-enable-on-no-config-file
+                (php-project-get-root-dir)))))
 
 (defun phpstan-get-config-file ()
   "Return path to phpstan configure file or `NIL'."
