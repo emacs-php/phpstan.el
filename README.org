@@ -56,20 +56,17 @@ If your project Composer relies on phpstan, you do not need to set anything.
 #+END_SRC
 
 *** Using Composer
-Please install [[https://packagist.org/packages/phpstan/phpstan-shim][phpstan/phpstan-shim]] or [[https://packagist.org/packages/phpstan/phpstan][phpstan/phpstan]] package for each user environment or project by using [[https://getcomposer.org/download/][Composer]].
+Please install [[https://packagist.org/packages/phpstan/phpstan][phpstan/phpstan]] package for each user environment or project by using [[https://getcomposer.org/download/][Composer]].
 
 If you are unfamiliar with resolving dependencies, the following shell commands are recommended.
 #+BEGIN_SRC shell
-$ composer global require phpstan/phpstan-shim
-#+END_SRC
-*Hint*: If you failed the installation due to old PsySH or php-parser, try the following shell command.
-#+BEGIN_SRC shell
-$ composer global remove psy/psysh nikic/php-parser
-$ composer global require phpstan/phpstan-shim psy/psysh
+$ composer global require phpstan/phpstan
 #+END_SRC
 
+*NOTICE*: [[https://packagist.org/packages/phpstan/phpstan-shim][phpstan/phpstan-shim]] is deprecated.  Please read [[https://medium.com/@ondrejmirtes/phpstan-0-12-released-f1a88036535d][PHPStan 0.12 Released!]].
+
 *** Using PHAR archive
-*NOTICE*: ~phpstan.el~ requires PHPStan **0.10+**.
+*NOTICE*: ~phpstan.el~ requires PHPStan **0.10+**.  We *strongly* recommend using the latest PHPStan.
 
 Please download ~phpstan.phar~ from [[https://github.com/phpstan/phpstan/releases][Releases · phpstan/phpstan]].
 ** Settings
