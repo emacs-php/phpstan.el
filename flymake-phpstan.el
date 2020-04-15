@@ -48,6 +48,7 @@
 
 (defcustom flymake-phpstan-disable-c-mode-hooks t
   "When T, disable `flymake-diagnostic-functions' for `c-mode'."
+  :type 'boolean
   :group 'flymake-phpstan)
 
 (defvar-local flymake-phpstan--proc nil)
