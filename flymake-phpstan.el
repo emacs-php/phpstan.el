@@ -90,7 +90,7 @@
   "Flymake backend for PHPStan report using REPORT-FN."
   (let ((command-args (phpstan-get-command-args)))
     (unless (car command-args)
-      (user-error "Cannot find a phpstan executtable command"))
+      (user-error "Cannot find a phpstan executable command"))
     (when (process-live-p flymake-phpstan--proc)
       (kill-process flymake-phpstan--proc))
     (let ((source (current-buffer)))
@@ -102,7 +102,7 @@
 
 ;;;###autoload
 (defun flymake-phpstan-turn-on ()
-  "Enable flymake-phpstan as buffer-local Flymake backend."
+  "Enable `flymake-phpstan' as buffer-local Flymake backend."
   (interactive)
   (let ((enabled (phpstan-enabled)))
     (when enabled
