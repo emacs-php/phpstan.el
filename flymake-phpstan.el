@@ -109,7 +109,7 @@
     (when enabled
       (flymake-mode 1)
       (when flymake-phpstan-disable-c-mode-hooks
-        (remove-hook 'flymake-diagnostic-functions 'flymake-cc t))
+        (remove-hook 'flymake-diagnostic-functions #'flymake-cc t))
       (add-hook 'flymake-diagnostic-functions #'flymake-phpstan nil t))))
 
 (provide 'flymake-phpstan)
