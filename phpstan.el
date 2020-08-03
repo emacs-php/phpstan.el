@@ -259,6 +259,11 @@ it returns the value of `SOURCE' as it is."
    ((symbolp phpstan-level) (symbol-name phpstan-level))
    (t phpstan-level)))
 
+(defun phpstan-analyze-file (file)
+  "Analyze a PHPScript FILE using PHPStan."
+  (interactive "fChoose a PHP script: ")
+  (compile (mapconcat #'shell-quote-argument (append (phpstan-get-command-args) (list file)) " ")))
+
 (defun phpstan-get-executable ()
   "Return PHPStan excutable file and arguments."
   (cond
