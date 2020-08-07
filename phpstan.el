@@ -77,6 +77,13 @@
   :type 'boolean
   :group 'phpstan)
 
+(defcustom phpstan-memory-limit nil
+  "Set --memory-limit option."
+  :type '(choice (string :tag "Specifies the memory limit in the same format php.ini accepts.")
+                 (const :tag "Not set --memory-limit option" nil))
+  :safe (lambda (v) (or (null v) (stringp v)))
+  :group 'phpstan)
+
 ;;;###autoload
 (progn
   (defvar phpstan-working-dir nil
@@ -259,6 +266,10 @@ it returns the value of `SOURCE' as it is."
    ((symbolp phpstan-level) (symbol-name phpstan-level))
    (t phpstan-level)))
 
+(defun phpstan-get-memory-limit ()
+  "Return --memory-limit value."
+  phpstan-memory-limit)
+
 (defun phpstan-analyze-file (file)
   "Analyze a PHPScript FILE using PHPStan."
   (interactive "fChoose a PHP script: ")
@@ -295,11 +306,13 @@ it returns the value of `SOURCE' as it is."
   (let ((executable (phpstan-get-executable))
         (path (phpstan-normalize-path (phpstan-get-config-file)))
         (autoload (phpstan-get-autoload-file))
+        (memory-limit (phpstan-get-memory-limit))
         (level (phpstan-get-level)))
     (append executable
             (list "analyze" "--error-format=raw" "--no-progress" "--no-interaction")
             (and path (list "-c" path))
             (and autoload (list "-a" autoload))
+            (and memory-limit (list "--memory-limit" memory-limit))
             (and level (list "-l" level))
             (list "--"))))
 
