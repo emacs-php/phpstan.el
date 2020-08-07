@@ -42,6 +42,7 @@ Put the following into ~.dir-locals.el~ files on the root directory of project.
          (phpstan-executable . docker)
          (phpstan-working-dir . (root . "path/to/dir"))
          (phpstan-config-file . (root . "path/to/dir/phpstan-docker.neon"))
+	 (phpstan-memory-limit . "1G")
          (phpstan-level . 7))))
 #+END_SRC
 
@@ -123,3 +124,8 @@ Rule level of PHPStan analysis.  Please see [[https://github.com/phpstan/phpstan
 
 *** Custom variable ~phpstan-flycheck-auto-set-executable~
 Set flycheck phpstan-executable automatically when non-NIL.
+*** Custom variable ~phpstan-memory-limit~
+Use phpstan memory limit option when non-NIL.
+- STRING :: Specifies the memory limit in the same format php.ini accepts.
+     - ex) ~"1G"~
+- ~nil~ :: Use memory limit in php.ini
