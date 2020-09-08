@@ -286,7 +286,7 @@ it returns the value of `SOURCE' as it is."
          (eq 'root (car phpstan-executable)))
     (list
      (expand-file-name (cdr phpstan-executable) (php-project-get-root-dir))))
-   ((and (stringp phpstan-executable) (file-exists-p phpstan-executable))
+   ((and (stringp phpstan-executable) (file-executable-p phpstan-executable))
     (list phpstan-executable))
    ((and phpstan-flycheck-auto-set-executable
          (listp phpstan-executable)
@@ -297,7 +297,7 @@ it returns the value of `SOURCE' as it is."
     (let ((vendor-phpstan (expand-file-name "vendor/bin/phpstan"
                                             (php-project-get-root-dir))))
       (cond
-       ((file-exists-p vendor-phpstan) (list vendor-phpstan))
+       ((file-executable-p vendor-phpstan) (list vendor-phpstan))
        ((executable-find "phpstan") (list (executable-find "phpstan")))
        (t (error "PHPStan executable not found")))))))
 
