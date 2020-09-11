@@ -51,10 +51,13 @@
       (when (and phpstan-flycheck-auto-set-executable
                  (not (and (boundp 'flycheck-phpstan-executable)
                            (symbol-value 'flycheck-phpstan-executable)))
-                 (or (eq 'docker phpstan-executable)
-                     (and (consp phpstan-executable)
-                          (stringp (car phpstan-executable))
-                          (listp (cdr phpstan-executable)))))
+                 (or (stringp phpstan-executable)
+                     (eq 'docker phpstan-executable)
+                     (and (eq 'root (car-safe phpstan-executable))
+                          (stringp (cdr-safe phpstan-executable)))
+                     (and (stirngp (car-safe phpstan-executable))
+                          (listp (cdr-safe phpstan-executable)))
+                     (null phpstan-executable)))
         (set (make-local-variable 'flycheck-phpstan-executable)
              (if (eq 'docker phpstan-executable)
                  phpstan-docker-executable
