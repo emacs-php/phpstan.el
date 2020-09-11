@@ -59,9 +59,10 @@
                           (listp (cdr-safe phpstan-executable)))
                      (null phpstan-executable)))
         (set (make-local-variable 'flycheck-phpstan-executable)
-             (if (eq 'docker phpstan-executable)
-                 phpstan-docker-executable
-               (car phpstan-executable)))))))
+             (cond
+              ((eq 'docker phpstan-executable) phpstan-docker-executable)
+              ((stringp phpstan-executable) phpstan-executable)
+              (t (car phpstan-executable))))))))
 
 (flycheck-define-checker phpstan
   "PHP static analyzer based on PHPStan."
