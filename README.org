@@ -124,8 +124,13 @@ Rule level of PHPStan analysis.  Please see [[https://github.com/phpstan/phpstan
 
 *** Custom variable ~phpstan-flycheck-auto-set-executable~
 Set flycheck phpstan-executable automatically when non-NIL.
+
 *** Custom variable ~phpstan-memory-limit~
 Use phpstan memory limit option when non-NIL.
 - STRING :: Specifies the memory limit in the same format php.ini accepts.
      - ex) ~"1G"~
 - ~nil~ :: Use memory limit in php.ini
+
+*** Custom variable ~phpstan-docker-image~
+Docker image URL or Docker Hub image name or NIL.  Default as ~"ghcr.io/phpstan/phpstan"~.  See [[https://phpstan.org/user-guide/docker][Docker - PHPStan Documentation]]
+ and [[https://github.com/orgs/phpstan/packages/container/package/phpstan][GitHub Container Registory - Package phpstan]].

@@ -84,6 +84,18 @@
   :safe (lambda (v) (or (null v) (stringp v)))
   :group 'phpstan)
 
+(defcustom phpstan-docker-image "ghcr.io/phpstan/phpstan"
+  "Docker image URL or Docker Hub image name or NIL."
+  :type '(choice
+          (string :tag "URL or image name of Docker Hub.")
+          (const :tag "Official Docker container" "ghcr.io/phpstan/phpstan")
+          (const :tag "No specify Docker image"))
+  :link '(url-link :tag "PHPStan Documentation" "https://phpstan.org/user-guide/docker")
+  :link '(url-link :tag "GitHub Container Registry"
+                   "https://github.com/orgs/phpstan/packages/container/package/phpstan")
+  :safe (lambda (v) (or (null v) (stringp v)))
+  :group 'phpstan)
+
 ;;;###autoload
 (progn
   (defvar phpstan-working-dir nil
@@ -281,7 +293,7 @@ it returns the value of `SOURCE' as it is."
    ((eq 'docker phpstan-executable)
     (list "run" "--rm" "-v"
           (concat (expand-file-name (php-project-get-root-dir)) ":/app")
-          "phpstan/phpstan"))
+          phpstan-docker-image))
    ((and (consp phpstan-executable)
          (eq 'root (car phpstan-executable)))
     (list
