@@ -35,6 +35,7 @@
 ;; https://www.gnu.org/software/emacs/manual/html_node/flymake/An-annotated-example-backend.html
 
 ;;; Code:
+(require 'cl-lib)
 (require 'php-project)
 (require 'flymake)
 (require 'phpstan)

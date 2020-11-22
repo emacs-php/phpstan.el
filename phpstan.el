@@ -53,6 +53,7 @@
 ;;
 
 ;;; Code:
+(require 'cl-lib)
 (require 'php-project)
 
 
