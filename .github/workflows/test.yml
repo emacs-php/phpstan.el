@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    paths-ignore:
+    - '**/*.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        emacs_version:
+          - "26.3"
+          - "27.1"
+          - snapshot
+        include:
+        - emacs_version: snapshot
+          allow_failure: true
+    steps:
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+        architecture: 'x64'
+
+    - uses: purcell/setup-emacs@master
+      with:
+        version: ${{ matrix.emacs_version }}
+
+    - uses: conao3/setup-cask@master
+      with:
+        version: 'snapshot'
+
+    - uses: actions/checkout@v2
+
+    - name: Run make
+      uses: nick-invision/retry@v2
+      with:
+        timeout_seconds: 90
+        max_attempts: 3
+        command: 'cask && make'
