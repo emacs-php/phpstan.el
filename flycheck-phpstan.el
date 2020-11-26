@@ -55,7 +55,7 @@
                      (eq 'docker phpstan-executable)
                      (and (eq 'root (car-safe phpstan-executable))
                           (stringp (cdr-safe phpstan-executable)))
-                     (and (stirngp (car-safe phpstan-executable))
+                     (and (stringp (car-safe phpstan-executable))
                           (listp (cdr-safe phpstan-executable)))
                      (null phpstan-executable)))
         (set (make-local-variable 'flycheck-phpstan-executable)
