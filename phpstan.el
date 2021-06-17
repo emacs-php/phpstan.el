@@ -285,22 +285,30 @@ it returns the value of `SOURCE' as it is."
 
 (defun phpstan-analyze-file (file)
   "Analyze a PHPScript FILE using PHPStan."
-  (interactive "fChoose a PHP script: ")
-  (compile (mapconcat #'shell-quote-argument (append (phpstan-get-command-args) (list file)) " ")))
+  (interactive (list (expand-file-name (read-file-name "Choose a PHP script: "))))
+  (compile (mapconcat #'shell-quote-argument (append (phpstan-get-command-args t) (list file)) " ")))
 
-(defun phpstan-get-executable ()
+(defun phpstan-get-executable-and-args ()
   "Return PHPStan excutable file and arguments."
   (cond
    ((eq 'docker phpstan-executable)
-    (list "run" "--rm" "-v"
+    (list phpstan-docker-executable "run" "--rm" "-v"
           (concat (expand-file-name (php-project-get-root-dir)) ":/app")
           phpstan-docker-image))
    ((and (consp phpstan-executable)
          (eq 'root (car phpstan-executable)))
-    (list
-     (expand-file-name (cdr phpstan-executable) (php-project-get-root-dir))))
-   ((and (stringp phpstan-executable) (file-exists-p phpstan-executable))
-    (list phpstan-executable))
+    (let ((phpstan (expand-file-name (cdr phpstan-executable) (php-project-get-root-dir))))
+      (if (file-executable-p phpstan)
+          (list phpstan)
+        (list php-executable phpstan))))
+   ((and (stringp phpstan-executable))
+    (unless (file-exists-p phpstan-executable)
+      (user-error "File %s is not exists.  Please check `phpstan-executable' variable" phpstan-executable))
+    (when (file-directory-p phpstan-executable)
+      (user-error "Path %s is a directory.  Please check `phpstan-executable' variable" phpstan-executable))
+    (if (file-executable-p phpstan-executable)
+        (list phpstan-executable)
+      (list php-executable phpstan-executable)))
    ((and phpstan-flycheck-auto-set-executable
          (listp phpstan-executable)
          (stringp (car phpstan-executable))
@@ -310,18 +318,22 @@ it returns the value of `SOURCE' as it is."
     (let ((vendor-phpstan (expand-file-name "vendor/bin/phpstan"
                                             (php-project-get-root-dir))))
       (cond
-       ((file-exists-p vendor-phpstan) (list vendor-phpstan))
+       ((file-exists-p vendor-phpstan)
+        (if (file-executable-p vendor-phpstan)
+            (list vendor-phpstan)
+          (list php-executable vendor-phpstan)))
        ((executable-find "phpstan") (list (executable-find "phpstan")))
        (t (error "PHPStan executable not found")))))))
 
-(defun phpstan-get-command-args ()
+(defun phpstan-get-command-args (&optional include-executable)
   "Return command line argument for PHPStan."
-  (let ((executable (phpstan-get-executable))
+  (let ((executable-and-args (phpstan-get-executable-and-args))
         (path (phpstan-normalize-path (phpstan-get-config-file)))
         (autoload (phpstan-get-autoload-file))
         (memory-limit (phpstan-get-memory-limit))
         (level (phpstan-get-level)))
-    (append executable
+    (append (if include-executable (list (car executable-and-args)) nil)
+            (cdr executable-and-options)
             (list "analyze" "--error-format=raw" "--no-progress" "--no-interaction")
             (and path (list "-c" path))
             (and autoload (list "-a" autoload))
