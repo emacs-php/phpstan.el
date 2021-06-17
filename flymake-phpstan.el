@@ -90,7 +90,7 @@
 
 (defun flymake-phpstan (report-fn &rest _ignored-args)
   "Flymake backend for PHPStan report using REPORT-FN."
-  (let ((command-args (phpstan-get-command-args)))
+  (let ((command-args (phpstan-get-command-args t)))
     (unless (car command-args)
       (user-error "Cannot find a phpstan executable command"))
     (when (process-live-p flymake-phpstan--proc)
