@@ -333,7 +333,7 @@ it returns the value of `SOURCE' as it is."
         (memory-limit (phpstan-get-memory-limit))
         (level (phpstan-get-level)))
     (append (if include-executable (list (car executable-and-args)) nil)
-            (cdr executable-and-options)
+            (cdr executable-and-args)
             (list "analyze" "--error-format=raw" "--no-progress" "--no-interaction")
             (and path (list "-c" path))
             (and autoload (list "-a" autoload))
