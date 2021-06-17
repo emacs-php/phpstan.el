@@ -58,7 +58,7 @@
                      (and (stringp (car-safe phpstan-executable))
                           (listp (cdr-safe phpstan-executable)))
                      (null phpstan-executable)))
-        (setq-local flycheck-phpstan-executable (car (phpstan-get-executable-and-options)))))))
+        (setq-local flycheck-phpstan-executable (car (phpstan-get-executable-and-args)))))))
 
 (flycheck-define-checker phpstan
   "PHP static analyzer based on PHPStan."
