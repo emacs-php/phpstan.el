@@ -49,7 +49,8 @@
   (let ((enabled (phpstan-enabled)))
     (prog1 enabled
       (when (and phpstan-flycheck-auto-set-executable
-                 (null (bound-and-true-p flycheck-phpstan-executable))
+                 (not (and (boundp 'flycheck-phpstan-executable)
+                           (symbol-value 'flycheck-phpstan-executable)))
                  (or (stringp phpstan-executable)
                      (eq 'docker phpstan-executable)
                      (and (eq 'root (car-safe phpstan-executable))
@@ -57,7 +58,11 @@
                      (and (stringp (car-safe phpstan-executable))
                           (listp (cdr-safe phpstan-executable)))
                      (null phpstan-executable)))
-        (setq-local flycheck-phpstan-executable (nth 0 (phpstan-get-executable)))))))
+        (set (make-local-variable 'flycheck-phpstan-executable)
+             (cond
+              ((eq 'docker phpstan-executable) phpstan-docker-executable)
+              ((stringp phpstan-executable) phpstan-executable)
+              (t (car phpstan-executable))))))))
 
 (flycheck-define-checker phpstan
   "PHP static analyzer based on PHPStan."
