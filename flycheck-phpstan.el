@@ -49,8 +49,7 @@
   (let ((enabled (phpstan-enabled)))
     (prog1 enabled
       (when (and phpstan-flycheck-auto-set-executable
-                 (not (and (boundp 'flycheck-phpstan-executable)
-                           (symbol-value 'flycheck-phpstan-executable)))
+                 (null (bound-and-true-p flycheck-phpstan-executable))
                  (or (stringp phpstan-executable)
                      (eq 'docker phpstan-executable)
                      (and (eq 'root (car-safe phpstan-executable))
