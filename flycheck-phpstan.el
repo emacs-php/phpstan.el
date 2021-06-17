@@ -48,7 +48,8 @@
   "Return path to phpstan configure file, and set buffer execute in side effect."
   (let ((enabled (phpstan-enabled)))
     (prog1 enabled
-      (when (and phpstan-flycheck-auto-set-executable
+      (when (and enabled
+                 phpstan-flycheck-auto-set-executable
                  (null (bound-and-true-p flycheck-phpstan-executable))
                  (or (stringp phpstan-executable)
                      (eq 'docker phpstan-executable)
@@ -57,11 +58,7 @@
                      (and (stringp (car-safe phpstan-executable))
                           (listp (cdr-safe phpstan-executable)))
                      (null phpstan-executable)))
-        (set (make-local-variable 'flycheck-phpstan-executable)
-             (cond
-              ((eq 'docker phpstan-executable) phpstan-docker-executable)
-              ((stringp phpstan-executable) phpstan-executable)
-              (t (car phpstan-executable))))))))
+        (setq-local flycheck-phpstan-executable (car (phpstan-get-executable-and-options)))))))
 
 (flycheck-define-checker phpstan
   "PHP static analyzer based on PHPStan."
