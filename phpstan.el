@@ -56,6 +56,8 @@
 (require 'cl-lib)
 (require 'php-project)
 
+(eval-when-compile
+  (require 'php))
 
 ;; Variables:
 (defgroup phpstan nil
