@@ -58,9 +58,8 @@
 
 
 ;; Variables:
-
 (defgroup phpstan nil
-  "Interaface to PHPStan"
+  "Interaface to PHPStan."
   :tag "PHPStan"
   :prefix "phpstan-"
   :group 'tools
@@ -229,7 +228,7 @@ NIL
                 (php-project-get-root-dir)))))
 
 (defun phpstan-get-config-file ()
-  "Return path to phpstan configure file or `NIL'."
+  "Return path to phpstan configure file or NIL."
   (if phpstan-config-file
       (if (and (consp phpstan-config-file)
                (eq 'root (car phpstan-config-file)))
@@ -252,7 +251,7 @@ NIL
       phpstan-autoload-file)))
 
 (defun phpstan-normalize-path (source-original &optional source)
-  "Return normalized source file path to pass by `SOURCE-ORIGINAL' OR `SOURCE'.
+  "Return normalized source file path to pass by SOURCE-ORIGINAL or SOURCE.
 
 If neither `phpstan-replace-path-prefix' nor executable docker is set,
 it returns the value of `SOURCE' as it is."
@@ -272,7 +271,7 @@ it returns the value of `SOURCE' as it is."
       (or source source-original))))
 
 (defun phpstan-get-level ()
-  "Return path to phpstan configure file or `NIL'."
+  "Return path to phpstan configure file or NIL."
   (cond
    ((null phpstan-level) nil)
    ((integerp phpstan-level) (int-to-string phpstan-level))
