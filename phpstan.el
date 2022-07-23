@@ -284,6 +284,7 @@ it returns the value of `SOURCE' as it is."
   "Return --memory-limit value."
   phpstan-memory-limit)
 
+;;;###autoload
 (defun phpstan-analyze-this-file ()
   "Analyze current buffer-file using PHPStan."
   (interactive)
@@ -291,6 +292,7 @@ it returns the value of `SOURCE' as it is."
                                     (read-file-name "Choose a PHP script: ")))))
     (compile (mapconcat #'shell-quote-argument (append (phpstan-get-command-args t) (list file)) " "))))
 
+;;;###autoload
 (defun phpstan-analyze-file (file)
   "Analyze a PHP script FILE using PHPStan."
   (interactive (list (expand-file-name (read-file-name "Choose a PHP script: "))))
