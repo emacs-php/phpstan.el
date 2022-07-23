@@ -300,6 +300,15 @@ it returns the value of `SOURCE' as it is."
   (compile (mapconcat #'shell-quote-argument
                       (append (phpstan-get-command-args :include-executable t) (list file)) " ")))
 
+;;;###autoload
+(defun phpstan-pro ()
+  "Analyze current PHP project using PHPStan Pro."
+  (interactive)
+  (let ((compilation-buffer-name-function (lambda (_) "*PHPStan Pro*"))
+        (command (mapconcat #'shell-quote-argument
+                            (phpstan-get-command-args :include-executable t :use-pro t) " ")))
+    (compile command t)))
+
 (defun phpstan-get-executable-and-args ()
   "Return PHPStan excutable file and arguments."
   (cond
@@ -347,6 +356,7 @@ it returns the value of `SOURCE' as it is."
     (append (if include-executable (list (car executable-and-args)) nil)
             (cdr executable-and-args)
             (list "analyze" "--error-format=raw" "--no-progress" "--no-interaction")
+            (and use-pro (list "--pro" "--no-ansi"))
             (and path (list "-c" path))
             (and autoload (list "-a" autoload))
             (and memory-limit (list "--memory-limit" memory-limit))
