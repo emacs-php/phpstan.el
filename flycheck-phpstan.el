@@ -63,9 +63,10 @@
 (flycheck-define-checker phpstan
   "PHP static analyzer based on PHPStan."
   :command ("php" (eval (phpstan-get-command-args))
-            (eval (phpstan-normalize-path
-                   (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace)
-                   (flycheck-save-buffer-to-temp #'flycheck-temp-file-system))))
+            (eval (if (or (buffer-modified-p) (not buffer-file-name))
+                      (phpstan-normalize-path
+                       (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace))
+                    buffer-file-name)))
   :working-directory (lambda (_) (phpstan-get-working-dir))
   :enabled (lambda () (flycheck-phpstan--enabled-and-set-variable))
   :error-patterns
