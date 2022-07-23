@@ -290,13 +290,15 @@ it returns the value of `SOURCE' as it is."
   (interactive)
   (let ((file (expand-file-name (or buffer-file-name
                                     (read-file-name "Choose a PHP script: ")))))
-    (compile (mapconcat #'shell-quote-argument (append (phpstan-get-command-args t) (list file)) " "))))
+    (compile (mapconcat #'shell-quote-argument
+                        (append (phpstan-get-command-args :include-executable t) (list file)) " "))))
 
 ;;;###autoload
 (defun phpstan-analyze-file (file)
   "Analyze a PHP script FILE using PHPStan."
   (interactive (list (expand-file-name (read-file-name "Choose a PHP script: "))))
-  (compile (mapconcat #'shell-quote-argument (append (phpstan-get-command-args t) (list file)) " ")))
+  (compile (mapconcat #'shell-quote-argument
+                      (append (phpstan-get-command-args :include-executable t) (list file)) " ")))
 
 (defun phpstan-get-executable-and-args ()
   "Return PHPStan excutable file and arguments."
@@ -335,7 +337,7 @@ it returns the value of `SOURCE' as it is."
        ((executable-find "phpstan") (list (executable-find "phpstan")))
        (t (error "PHPStan executable not found")))))))
 
-(defun phpstan-get-command-args (&optional include-executable)
+(cl-defun phpstan-get-command-args (&key include-executable use-pro)
   "Return command line argument for PHPStan."
   (let ((executable-and-args (phpstan-get-executable-and-args))
         (path (phpstan-normalize-path (phpstan-get-config-file)))
