@@ -291,14 +291,14 @@ it returns the value of `SOURCE' as it is."
   (let ((file (expand-file-name (or buffer-file-name
                                     (read-file-name "Choose a PHP script: ")))))
     (compile (mapconcat #'shell-quote-argument
-                        (append (phpstan-get-command-args :include-executable t) (list file)) " "))))
+                        (phpstan-get-command-args :include-executable t :args (list file)) " "))))
 
 ;;;###autoload
 (defun phpstan-analyze-file (file)
   "Analyze a PHP script FILE using PHPStan."
   (interactive (list (expand-file-name (read-file-name "Choose a PHP script: "))))
   (compile (mapconcat #'shell-quote-argument
-                      (append (phpstan-get-command-args :include-executable t) (list file)) " ")))
+                      (phpstan-get-command-args :include-executable t :args (list file)) " ")))
 
 ;;;###autoload
 (defun phpstan-pro ()
@@ -346,22 +346,23 @@ it returns the value of `SOURCE' as it is."
        ((executable-find "phpstan") (list (executable-find "phpstan")))
        (t (error "PHPStan executable not found")))))))
 
-(cl-defun phpstan-get-command-args (&key include-executable use-pro)
+(cl-defun phpstan-get-command-args (&key include-executable use-pro args)
   "Return command line argument for PHPStan."
   (let ((executable-and-args (phpstan-get-executable-and-args))
         (path (phpstan-normalize-path (phpstan-get-config-file)))
         (autoload (phpstan-get-autoload-file))
         (memory-limit (phpstan-get-memory-limit))
         (level (phpstan-get-level)))
-    (append (if include-executable (list (car executable-and-args)) nil)
-            (cdr executable-and-args)
-            (list "analyze" "--error-format=raw" "--no-progress" "--no-interaction")
-            (and use-pro (list "--pro" "--no-ansi"))
-            (and path (list "-c" path))
-            (and autoload (list "-a" autoload))
-            (and memory-limit (list "--memory-limit" memory-limit))
-            (and level (list "-l" level))
-            (list "--"))))
+    (nconc (if include-executable (list (car executable-and-args)) nil)
+           (cdr executable-and-args)
+           (list "analyze" "--error-format=raw" "--no-progress" "--no-interaction")
+           (and use-pro (list "--pro" "--no-ansi"))
+           (and path (list "-c" path))
+           (and autoload (list "-a" autoload))
+           (and memory-limit (list "--memory-limit" memory-limit))
+           (and level (list "-l" level))
+           (list "--")
+           args)))
 
 (provide 'phpstan)
 ;;; phpstan.el ends here
