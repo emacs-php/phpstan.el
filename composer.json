@@ -3,6 +3,6 @@
     "description": "Emacs interface to PHPStan",
     "license": "GPL-3.0-or-later",
     "require": {
-        "phpstan/phpstan": "^0.12.92"
+        "phpstan/phpstan": "^1.9"
     }
 }
