@@ -323,6 +323,19 @@ it returns the value of `SOURCE' as it is."
                       (phpstan-get-command-args :include-executable t :args (list file)) " ")))
 
 ;;;###autoload
+(defun phpstan-analyze-project ()
+  "Analyze a PHP project using PHPStan."
+  (interactive)
+  (compile (mapconcat #'shell-quote-argument (phpstan-get-command-args :include-executable t) " ")))
+
+;;;###autoload
+(defun phpstan-generate-baseline ()
+  "Generate PHPStan baseline file."
+  (interactive)
+  (compile (mapconcat #'shell-quote-argument
+                      (phpstan-get-command-args :include-executable t :options '("--generate-baseline")) " ")))
+
+;;;###autoload
 (defun phpstan-pro ()
   "Analyze current PHP project using PHPStan Pro."
   (interactive)
