@@ -368,7 +368,7 @@ it returns the value of `SOURCE' as it is."
        ((executable-find "phpstan") (list (executable-find "phpstan")))
        (t (error "PHPStan executable not found")))))))
 
-(cl-defun phpstan-get-command-args (&key include-executable use-pro args format)
+(cl-defun phpstan-get-command-args (&key include-executable use-pro args format options)
   "Return command line argument for PHPStan."
   (let ((executable-and-args (phpstan-get-executable-and-args))
         (path (phpstan-normalize-path (phpstan-get-config-file)))
@@ -393,8 +393,8 @@ it returns the value of `SOURCE' as it is."
                            "--xdebug"))
              (list phpstan--use-xdebug-option))
             (phpstan-use-xdebug-option (list "--xdebug")))
-           (list "--")
-           args)))
+           options
+           (and args (cons "--" args)))))
 
 (provide 'phpstan)
 ;;; phpstan.el ends here
