@@ -29,7 +29,7 @@ Emacs interface to [[https://github.com/phpstan/phpstan][PHPStan]], includes che
 #+END_SRC
 
 *** Using Docker (phpstan/docker-image)
-Install [[https://www.docker.com/get-started][Docker]] and [[https://hub.docker.com/r/phpstan/phpstan][phpstan/phpstan image]].
+Install [[https://www.docker.com/get-started][Docker]] and [[https://github.com/phpstan/phpstan/pkgs/container/phpstan][phpstan/phpstan image]].
 
 If you always use Docker for PHPStan, add the following into your ~.emacs~ file (~~/.emacs.d/init.el~)
 #+BEGIN_SRC emacs-lisp
