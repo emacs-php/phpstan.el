@@ -58,7 +58,8 @@
 (require 'php-runtime)
 
 (eval-when-compile
-  (require 'php))
+  (require 'php)
+  (require 'json))
 
 ;; Variables:
 (defgroup phpstan nil
@@ -293,6 +294,17 @@ it returns the value of `SOURCE' as it is."
 (defun phpstan-get-memory-limit ()
   "Return --memory-limit value."
   phpstan-memory-limit)
+
+(defun phpstan--parse-json (buffer)
+  "Read JSON string from BUFFER."
+  (with-current-buffer buffer
+    (goto-char (point-min))
+    (if (eval-when-compile (and (fboundp 'json-serialize)
+                                (fboundp 'json-parse-buffer)))
+        (with-no-warnings
+          (json-parse-buffer :object-type 'plist :array-type 'list))
+      (let ((json-object-type 'plist) (json-array-type 'list))
+        (json-read-object)))))
 
 ;;;###autoload
 (defun phpstan-analyze-this-file ()
