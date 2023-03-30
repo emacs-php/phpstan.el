@@ -1,5 +1,6 @@
 (package "phpstan" "0.6.0" "Interface to PHPStan (PHP static analyzer)")
 (source "melpa" "https://melpa.org/packages/")
+(source "gnu" "https://elpa.gnu.org/packages/")
 
 (package-file "phpstan.el")
 (package-file "flycheck-phpstan.el")

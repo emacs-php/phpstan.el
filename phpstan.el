@@ -7,7 +7,7 @@
 ;; Version: 0.6.0
 ;; Keywords: tools, php
 ;; Homepage: https://github.com/emacs-php/phpstan.el
-;; Package-Requires: ((emacs "24.3") (php-mode "1.22.3") (php-runtime "0.2"))
+;; Package-Requires: ((emacs "24.3") (compat "29") (php-mode "1.22.3") (php-runtime "0.2"))
 ;; License: GPL-3.0-or-later
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,7 @@
 (require 'php-runtime)
 
 (eval-when-compile
+  (require 'compat)
   (require 'php)
   (require 'json))
 
