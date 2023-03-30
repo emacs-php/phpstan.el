@@ -7,7 +7,7 @@
 ;; Version: 0.6.0
 ;; Keywords: tools, php
 ;; Homepage: https://github.com/emacs-php/phpstan.el
-;; Package-Requires: ((emacs "24.3") (php-mode "1.22.3"))
+;; Package-Requires: ((emacs "24.3") (php-mode "1.22.3") (php-runtime "0.2"))
 ;; License: GPL-3.0-or-later
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -55,6 +55,7 @@
 ;;; Code:
 (require 'cl-lib)
 (require 'php-project)
+(require 'php-runtime)
 
 (eval-when-compile
   (require 'php))
@@ -97,6 +98,15 @@
                    "https://github.com/orgs/phpstan/packages/container/package/phpstan")
   :safe (lambda (v) (or (null v) (stringp v)))
   :group 'phpstan)
+
+(defcustom phpstan-use-xdebug-option 'auto
+  "Set --xdebug option."
+  :type '(choice (const :tag "Set --xdebug option dynamically" 'auto)
+                 (const :tag "Add --xdebug option" t)
+                 (const :tag "No --xdebug option" nil))
+  :group 'phpstan)
+
+(defvar-local phpstan--use-xdebug-option nil)
 
 ;;;###autoload
 (progn
@@ -361,6 +371,14 @@ it returns the value of `SOURCE' as it is."
            (and autoload (list "-a" autoload))
            (and memory-limit (list "--memory-limit" memory-limit))
            (and level (list "-l" level))
+           (cond
+            (phpstan--use-xdebug-option (list phpstan--use-xdebug-option))
+            ((eq phpstan-use-xdebug-option 'auto)
+             (setq-local phpstan--use-xdebug-option
+                         (when (string= "1" (php-runtime-expr "extension_loaded('xdebug')"))
+                           "--xdebug"))
+             (list phpstan--use-xdebug-option))
+            (phpstan-use-xdebug-option (list "--xdebug")))
            (list "--")
            args)))
 
