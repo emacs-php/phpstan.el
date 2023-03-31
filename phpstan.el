@@ -114,6 +114,12 @@
   :safe #'stringp
   :group 'phpstan)
 
+(defcustom phpstan-tip-message-prefix "💡 "
+  "Prefix of PHPStan tip message."
+  :type 'string
+  :safe #'stringp
+  :group 'phpstan)
+
 (defvar-local phpstan--use-xdebug-option nil)
 
 ;;;###autoload
