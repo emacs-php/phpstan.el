@@ -108,6 +108,12 @@
                  (const :tag "No --xdebug option" nil))
   :group 'phpstan)
 
+(defcustom phpstan-generate-baseline-options '("--generate-baseline" "--allow-empty-baseline")
+  "Command line options for generating PHPStan baseline."
+  :type '(repeat string)
+  :safe #'listp
+  :group 'phpstan)
+
 (defcustom phpstan-baseline-file "phpstan-baseline.neon"
   "File name of PHPStan baseline file."
   :type 'string
@@ -355,7 +361,7 @@ it returns the value of `SOURCE' as it is."
                                (php-project-get-root-dir)
                                default-directory)))
     (compile (mapconcat #'shell-quote-argument
-                        (phpstan-get-command-args :include-executable t :options '("--generate-baseline")) " "))))
+                        (phpstan-get-command-args :include-executable t :options phpstan-generate-baseline-options) " "))))
 
 ;;;###autoload
 (defun phpstan-find-baseline-file ()
