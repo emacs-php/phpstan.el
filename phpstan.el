@@ -312,6 +312,11 @@ it returns the value of `SOURCE' as it is."
   "Read JSON string from BUFFER."
   (with-current-buffer buffer
     (goto-char (point-min))
+    ;; Ignore STDERR
+    (save-match-data
+      (when (search-forward-regexp "^{" nil t)
+        (backward-char 1)
+        (delete-region (point-min) (point))))
     (if (eval-when-compile (and (fboundp 'json-serialize)
                                 (fboundp 'json-parse-buffer)))
         (with-no-warnings
