@@ -101,7 +101,7 @@
   :safe (lambda (v) (or (null v) (stringp v)))
   :group 'phpstan)
 
-(defcustom phpstan-use-xdebug-option 'auto
+(defcustom phpstan-use-xdebug-option nil
   "Set --xdebug option."
   :type '(choice (const :tag "Set --xdebug option dynamically" 'auto)
                  (const :tag "Add --xdebug option" t)
