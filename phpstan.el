@@ -344,14 +344,18 @@ it returns the value of `SOURCE' as it is."
 (defun phpstan-analyze-project ()
   "Analyze a PHP project using PHPStan."
   (interactive)
-  (compile (mapconcat #'shell-quote-argument (phpstan-get-command-args :include-executable t) " ")))
+  (let ((default-directory (or (php-project-get-root-dir) default-directory)))
+    (compile (mapconcat #'shell-quote-argument (phpstan-get-command-args :include-executable t) " "))))
 
 ;;;###autoload
 (defun phpstan-generate-baseline ()
   "Generate PHPStan baseline file."
   (interactive)
-  (compile (mapconcat #'shell-quote-argument
-                      (phpstan-get-command-args :include-executable t :options '("--generate-baseline")) " ")))
+  (let ((default-directory (or (locate-dominating-file default-directory phpstan-baseline-file)
+                               (php-project-get-root-dir)
+                               default-directory)))
+    (compile (mapconcat #'shell-quote-argument
+                        (phpstan-get-command-args :include-executable t :options '("--generate-baseline")) " "))))
 
 ;;;###autoload
 (defun phpstan-find-baseline-file ()
