@@ -58,7 +58,7 @@
 (require 'php-runtime)
 
 (eval-when-compile
-  (require 'compat)
+  (require 'compat nil t)
   (require 'php)
   (require 'json))
 
