@@ -421,10 +421,10 @@ it returns the value of `SOURCE' as it is."
        ((executable-find "phpstan") (list (executable-find "phpstan")))
        (t (error "PHPStan executable not found")))))))
 
-(cl-defun phpstan-get-command-args (&key include-executable use-pro args format options)
+(cl-defun phpstan-get-command-args (&key include-executable use-pro args format options config)
   "Return command line argument for PHPStan."
   (let ((executable-and-args (phpstan-get-executable-and-args))
-        (path (phpstan-normalize-path (phpstan-get-config-file)))
+        (config (or config (phpstan-normalize-path (phpstan-get-config-file))))
         (autoload (phpstan-get-autoload-file))
         (memory-limit (phpstan-get-memory-limit))
         (level (phpstan-get-level)))
@@ -434,7 +434,7 @@ it returns the value of `SOURCE' as it is."
                  (format "--error-format=%s" (or format "raw"))
                  "--no-progress" "--no-interaction")
            (and use-pro (list "--pro" "--no-ansi"))
-           (and path (list "-c" path))
+           (and config (list "-c" config))
            (and autoload (list "-a" autoload))
            (and memory-limit (list "--memory-limit" memory-limit))
            (and level (list "-l" level))
