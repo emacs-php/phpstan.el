@@ -78,14 +78,16 @@
   :group 'phpstan)
 
 (defcustom phpstan-enable-on-no-config-file t
-  "If T, activate configuration from composer even when `phpstan.neon' is not found."
+  "If T, activate config from composer even when `phpstan.neon' is not found."
   :type 'boolean
   :group 'phpstan)
 
 (defcustom phpstan-memory-limit nil
   "Set --memory-limit option."
-  :type '(choice (string :tag "Specifies the memory limit in the same format php.ini accepts.")
+  :type '(choice (string :tag "A memory limit number in php.ini format.")
                  (const :tag "Not set --memory-limit option" nil))
+  :link '(url-link :tag "PHP Manual"
+                   "https://www.php.net/manual/ini.core.php#ini.memory-limit")
   :safe (lambda (v) (or (null v) (stringp v)))
   :group 'phpstan)
 
@@ -94,7 +96,7 @@
   :type '(choice
           (string :tag "URL or image name of Docker Hub.")
           (const :tag "Official Docker container" "ghcr.io/phpstan/phpstan")
-          (const :tag "No specify Docker image"))
+          (const :tag "No specify Docker image" nil))
   :link '(url-link :tag "PHPStan Documentation" "https://phpstan.org/user-guide/docker")
   :link '(url-link :tag "GitHub Container Registry"
                    "https://github.com/orgs/phpstan/packages/container/package/phpstan")
@@ -103,9 +105,10 @@
 
 (defcustom phpstan-use-xdebug-option nil
   "Set --xdebug option."
-  :type '(choice (const :tag "Set --xdebug option dynamically" 'auto)
+  :type '(choice (const :tag "Set --xdebug option dynamically" auto)
                  (const :tag "Add --xdebug option" t)
                  (const :tag "No --xdebug option" nil))
+  :safe #'symbolp
   :group 'phpstan)
 
 (defcustom phpstan-generate-baseline-options '("--generate-baseline" "--allow-empty-baseline")
@@ -180,7 +183,8 @@ STRING
      Relative path to `phpstan' configuration file from project root directory.
 
 NIL
-     If `phpstan-enable-on-no-config-file', search \"vendor/autoload.php\" in (phpstan-get-working-dir).")
+     If `phpstan-enable-on-no-config-file', search \"vendor/autoload.php\"
+     in (phpstan-get-working-dir).")
   (put 'phpstan-autoload-file 'safe-local-variable
        #'(lambda (v) (if (consp v)
                          (and (eq 'root (car v)) (stringp (cdr v)))
