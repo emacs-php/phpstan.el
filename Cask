@@ -1,4 +1,4 @@
-(package "phpstan" "0.7.0" "Interface to PHPStan (PHP static analyzer)")
+(package "phpstan" "0.7.2" "Interface to PHPStan (PHP static analyzer)")
 (source melpa)
 (source gnu)
 
