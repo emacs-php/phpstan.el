@@ -63,10 +63,20 @@
 
 (defun flycheck-phpstan-parse-output (output &optional _checker _buffer)
   "Parse PHPStan errors from OUTPUT."
-  (with-current-buffer (flycheck-phpstan--temp-buffer)
-    (erase-buffer)
-    (insert output))
-  (flycheck-phpstan-parse-json (flycheck-phpstan--temp-buffer)))
+  (let ((filename (buffer-file-name))
+        (buffer (current-buffer)))
+    (with-current-buffer (flycheck-phpstan--temp-buffer)
+      (erase-buffer)
+      (insert output)
+      (goto-char (point-min))
+      ;; PHPStan might just output the "No files found to analyse"
+      ;; string and no JSON if the file was excluded by phpstan.neon.
+      ;; Which will make JSON parsing fail and break flycheck.
+      (if (search-forward "No files found to analyse" 500 t)
+          (list (flycheck-error-new-at 1 1 'warning "PHPStan: File ignored by configuration"
+                                       :filename filename :buffer buffer))
+        (goto-char (point-max))
+        (flycheck-phpstan-parse-json (flycheck-phpstan--temp-buffer))))))
 
 (defun flycheck-phpstan--temp-buffer ()
   "Return a temporary buffer for decode JSON."
