@@ -5,6 +5,7 @@ EASK ?= eask
 install:
 	$(EASK) package
 	$(EASK) install
+	$(EASK) install-deps
 
 compile:
 	$(EASK) compile
