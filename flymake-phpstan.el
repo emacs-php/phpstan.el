@@ -90,15 +90,19 @@
 
 (defun flymake-phpstan (report-fn &rest _ignored-args)
   "Flymake backend for PHPStan report using REPORT-FN."
-  (let ((command-args (phpstan-get-command-args t)))
+  (let ((command-args (phpstan-get-command-args :include-executable t)))
     (unless (car command-args)
       (user-error "Cannot find a phpstan executable command"))
     (when (process-live-p flymake-phpstan--proc)
       (kill-process flymake-phpstan--proc))
-    (let ((source (current-buffer)))
+    (let ((source (current-buffer))
+          (target-path (if (or (buffer-modified-p) (not buffer-file-name))
+                           (phpstan-normalize-path
+                            (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace))
+                         buffer-file-name)))
       (save-restriction
         (widen)
-        (setq flymake-phpstan--proc (flymake-phpstan-make-process (php-project-get-root-dir) command-args report-fn source))
+        (setq flymake-phpstan--proc (flymake-phpstan-make-process (php-project-get-root-dir) (append command-args (list "--" target-path)) report-fn source))
         (process-send-region flymake-phpstan--proc (point-min) (point-max))
         (process-send-eof flymake-phpstan--proc)))))
 
