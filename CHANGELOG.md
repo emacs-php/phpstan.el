@@ -2,6 +2,12 @@
 
 All notable changes of the `phpstan.el` are documented in this file using the [Keep a Changelog](https://keepachangelog.com/) principles.
 
+## Unreleased
+
+### Added
+
+* Add `phpstan-enable-remote-experimental` custom variable for activate PHPStan on TRAMP.
+
 ## [0.7.0]
 
 ### Added
