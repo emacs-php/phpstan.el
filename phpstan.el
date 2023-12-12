@@ -338,15 +338,17 @@ it returns the value of `SOURCE' as it is."
 (defun phpstan-analyze-this-file ()
   "Analyze current buffer-file using PHPStan."
   (interactive)
-  (let ((file (expand-file-name (or buffer-file-name
-                                    (read-file-name "Choose a PHP script: ")))))
+  (let ((file (phpstan-normalize-path
+               (expand-file-name (or buffer-file-name
+                                     (read-file-name "Choose a PHP script: "))))))
     (compile (mapconcat #'shell-quote-argument
                         (phpstan-get-command-args :include-executable t :args (list file)) " "))))
 
 ;;;###autoload
 (defun phpstan-analyze-file (file)
   "Analyze a PHP script FILE using PHPStan."
-  (interactive (list (expand-file-name (read-file-name "Choose a PHP script: "))))
+  (interactive (list (phpstan-normalize-path
+                      (expand-file-name (read-file-name "Choose a PHP script: ")))))
   (compile (mapconcat #'shell-quote-argument
                       (phpstan-get-command-args :include-executable t :args (list file)) " ")))
 
