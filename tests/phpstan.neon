@@ -1,2 +1,3 @@
 parameters:
-        bootstrap: %rootDir%/../../../tests/bootstrap.php
+        bootstrapFiles:
+                - %rootDir%/../../../tests/bootstrap.php
