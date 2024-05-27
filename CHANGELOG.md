@@ -7,6 +7,7 @@ All notable changes of the `phpstan.el` are documented in this file using the [K
 ### Added
 
 * Add `phpstan-enable-remote-experimental` custom variable for activate PHPStan on TRAMP.
+* Add support for `php-ts-mode`.
 
 ## [0.7.0]
 

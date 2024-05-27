@@ -103,7 +103,7 @@
   :working-directory (lambda (_) (phpstan-get-working-dir))
   :enabled (lambda () (flycheck-phpstan--enabled-and-set-variable))
   :error-parser flycheck-phpstan-parse-output
-  :modes (php-mode phps-mode))
+  :modes (php-mode php-ts-mode phps-mode))
 
 (add-to-list 'flycheck-checkers 'phpstan t)
 (flycheck-add-next-checker 'php 'phpstan)
