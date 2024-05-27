@@ -129,6 +129,12 @@
   :safe #'stringp
   :group 'phpstan)
 
+(defcustom phpstan-identifier-prefix "🪪 "
+  "Prefix of PHPStan error identifier."
+  :type 'string
+  :safe #'stringp
+  :group 'phpstan)
+
 (defcustom phpstan-enable-remote-experimental nil
   "Enable PHPStan analysis remotely by TRAMP.
 
@@ -359,14 +365,14 @@ it returns the value of `SOURCE' as it is."
   (let ((file (phpstan--expand-file-name (or buffer-file-name
                                       (read-file-name "Choose a PHP script: ")))))
     (compile (mapconcat #'shell-quote-argument
-                        (phpstan-get-command-args :include-executable t :args (list file)) " "))))
+                        (phpstan-get-command-args :include-executable t :args (list file) :verbose 1) " "))))
 
 ;;;###autoload
 (defun phpstan-analyze-file (file)
   "Analyze a PHP script FILE using PHPStan."
   (interactive (list (phpstan--expand-file-name (read-file-name "Choose a PHP script: "))))
   (compile (mapconcat #'shell-quote-argument
-                      (phpstan-get-command-args :include-executable t :args (list file)) " ")))
+                      (phpstan-get-command-args :include-executable t :args (list file) :verbose 1) " ")))
 
 ;;;###autoload
 (defun phpstan-analyze-project ()
@@ -440,7 +446,7 @@ it returns the value of `SOURCE' as it is."
        ((executable-find "phpstan") (list (executable-find "phpstan")))
        (t (error "PHPStan executable not found")))))))
 
-(cl-defun phpstan-get-command-args (&key include-executable use-pro args format options config)
+(cl-defun phpstan-get-command-args (&key include-executable use-pro args format options config verbose)
   "Return command line argument for PHPStan."
   (let ((executable-and-args (phpstan-get-executable-and-args))
         (config (or config (phpstan-normalize-path (phpstan-get-config-file))))
@@ -457,6 +463,12 @@ it returns the value of `SOURCE' as it is."
            (and autoload (list "-a" autoload))
            (and memory-limit (list "--memory-limit" memory-limit))
            (and level (list "-l" level))
+           (cond
+            ((null verbose) nil)
+            ((memq verbose '(1 t)) (list "-v"))
+            ((eq verbose 2) (list "-vv"))
+            ((eq verbose 3) (list "-vvv"))
+            (error ":verbose option should be 1, 2, 3 or `t'"))
            (cond
             (phpstan--use-xdebug-option (list phpstan--use-xdebug-option))
             ((eq phpstan-use-xdebug-option 'auto)
