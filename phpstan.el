@@ -129,6 +129,16 @@
   :safe #'stringp
   :group 'phpstan)
 
+(defcustom phpstan-enable-remote-experimental nil
+  "Enable PHPStan analysis remotely by TRAMP.
+
+When non-nil, PHPStan will be executed on a remote server for code analysis.
+This feature is experimental and should be used with caution as it may
+have unexpected behaviors or performance implications."
+  :type 'boolean
+  :safe #'booleanp
+  :group 'phpstan)
+
 (defvar-local phpstan--use-xdebug-option nil)
 
 ;;;###autoload
@@ -257,11 +267,12 @@ NIL
 
 (defun phpstan-enabled ()
   "Return non-NIL if PHPStan configured or Composer detected."
-  (and (not (file-remote-p default-directory)) ;; Not support remote filesystem
-       (or (phpstan-get-config-file)
-           (phpstan-get-autoload-file)
-           (and phpstan-enable-on-no-config-file
-                (php-project-get-root-dir)))))
+  (unless (and (not phpstan-enable-remote-experimental)
+               (file-remote-p default-directory)) ;; Not support remote filesystem by default
+    (or (phpstan-get-config-file)
+        (phpstan-get-autoload-file)
+        (and phpstan-enable-on-no-config-file
+             (php-project-get-root-dir)))))
 
 (defun phpstan-get-config-file ()
   "Return path to phpstan configure file or NIL."
@@ -334,21 +345,26 @@ it returns the value of `SOURCE' as it is."
       (let ((json-object-type 'plist) (json-array-type 'list))
         (json-read-object)))))
 
+(defun phpstan--expand-file-name (name)
+  "Expand file name by NAME."
+  (let ((file (expand-file-name name)))
+    (if (file-remote-p name)
+        (tramp-file-name-localname (tramp-dissect-file-name name))
+      (expand-file-name file))))
+
 ;;;###autoload
 (defun phpstan-analyze-this-file ()
   "Analyze current buffer-file using PHPStan."
   (interactive)
-  (let ((file (phpstan-normalize-path
-               (expand-file-name (or buffer-file-name
-                                     (read-file-name "Choose a PHP script: "))))))
+  (let ((file (phpstan--expand-file-name (or buffer-file-name
+                                      (read-file-name "Choose a PHP script: ")))))
     (compile (mapconcat #'shell-quote-argument
                         (phpstan-get-command-args :include-executable t :args (list file)) " "))))
 
 ;;;###autoload
 (defun phpstan-analyze-file (file)
   "Analyze a PHP script FILE using PHPStan."
-  (interactive (list (phpstan-normalize-path
-                      (expand-file-name (read-file-name "Choose a PHP script: ")))))
+  (interactive (list (phpstan--expand-file-name (read-file-name "Choose a PHP script: "))))
   (compile (mapconcat #'shell-quote-argument
                       (phpstan-get-command-args :include-executable t :args (list file)) " ")))
 
@@ -413,13 +429,14 @@ it returns the value of `SOURCE' as it is."
          (listp (cdr phpstan-executable)))
     (cdr phpstan-executable))
    ((null phpstan-executable)
-    (let ((vendor-phpstan (expand-file-name "vendor/bin/phpstan"
-                                            (php-project-get-root-dir))))
+    (let* ((vendor-phpstan (expand-file-name "vendor/bin/phpstan"
+                                             (php-project-get-root-dir)))
+           (expanded-vendor-phpstan (phpstan--expand-file-name vendor-phpstan)))
       (cond
        ((file-exists-p vendor-phpstan)
         (if (file-executable-p vendor-phpstan)
-            (list vendor-phpstan)
-          (list php-executable vendor-phpstan)))
+            (list expanded-vendor-phpstan)
+          (list php-executable expanded-vendor-phpstan)))
        ((executable-find "phpstan") (list (executable-find "phpstan")))
        (t (error "PHPStan executable not found")))))))
 
@@ -436,7 +453,7 @@ it returns the value of `SOURCE' as it is."
                  (format "--error-format=%s" (or format "raw"))
                  "--no-progress" "--no-interaction")
            (and use-pro (list "--pro" "--no-ansi"))
-           (and config (list "-c" config))
+           (and config (list "-c" (phpstan--expand-file-name config)))
            (and autoload (list "-a" autoload))
            (and memory-limit (list "--memory-limit" memory-limit))
            (and level (list "-l" level))
