@@ -129,6 +129,12 @@
   :safe #'stringp
   :group 'phpstan)
 
+(defcustom phpstan-identifier-prefix "🪪 "
+  "Prefix of PHPStan error identifier."
+  :type 'string
+  :safe #'stringp
+  :group 'phpstan)
+
 (defcustom phpstan-enable-remote-experimental nil
   "Enable PHPStan analysis remotely by TRAMP.
 
