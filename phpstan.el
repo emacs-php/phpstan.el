@@ -271,6 +271,14 @@ NIL
                              (and (stringp (car v)) (listp (cdr v))))
                        (or (eq 'docker v) (null v) (stringp v))))))
 
+;; Utilities:
+(defun phpstan--plist-to-alist (plist)
+  "Convert PLIST to association list."
+  (let (alist)
+    (while plist
+      (push (cons (substring-no-properties (symbol-name (pop plist)) 1) (pop plist)) alist))
+    (nreverse alist)))
+
 ;; Functions:
 (defun phpstan-get-working-dir ()
   "Return path to working directory of PHPStan."
