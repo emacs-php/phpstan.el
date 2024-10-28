@@ -88,6 +88,17 @@ Typically, you would set the following ~.dir-locals.el~.
 #+END_SRC
 
 If there is a ~phpstan.neon~ file in the root directory of the project, you do not need to set both ~phpstan-working-dir~ and ~phpstan-config-file~.
+** Commands
+This package provides convenient commands for using PHPStan from Emacs.
+*** Command ~phpstan-insert-dumptype~
+Add ~\PHPStan\dumpType(...);~ to your PHP code and analyze it to make PHPStan display the type of the expression.
+#+BEGIN_SRC
+(define-key php-mode-map (kbd "C-c ^") #'phpstan-insert-dumptype)
+#+END_SRC
+
+By default, if you press ~C-u~ before invoking the command, ~\PHPStan\dumpPhpDocType()~ will be inserted.
+
+This feature was added in *PHPStan 1.12.7* and will dump types compatible with the ~@param~ and ~@return~ PHPDoc tags.
 
 ** API
 Most variables defined in this package are buffer local.  If you want to set it for multiple projects, use [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Default-Value.html][setq-default]].
