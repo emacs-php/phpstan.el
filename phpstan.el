@@ -145,6 +145,15 @@ have unexpected behaviors or performance implications."
   :safe #'booleanp
   :group 'phpstan)
 
+(defconst phpstan-template-dump-type "\\PHPStan\\dumpType();")
+(defconst phpstan-template-dump-phpdoc-type "\\PHPStan\\dumpPhpDocType();")
+
+(defcustom phpstan-intert-dump-type-templates (cons phpstan-template-dump-type
+                                             phpstan-template-dump-phpdoc-type)
+  "Default template of PHPStan dumpType insertion."
+  :type '(cons string string)
+  :group 'phpstan)
+
 (defvar-local phpstan--use-xdebug-option nil)
 
 ;;;###autoload
@@ -479,6 +488,25 @@ it returns the value of `SOURCE' as it is."
             (phpstan-use-xdebug-option (list "--xdebug")))
            options
            (and args (cons "--" args)))))
+
+;;;###autoload
+(defun phpstan-insert-dumptype (&optional expression prefix-num)
+  "Insert PHPStan\\dumpType() expression-statement by EXPRESSION and PREFIX-NUM."
+  (interactive
+   (list
+    (if (region-active-p)
+        (buffer-substring-no-properties (region-beginning) (region-end))
+      (or (thing-at-point 'symbol t) ""))
+    current-prefix-arg))
+  (let ((template (if current-prefix-arg
+                      (cdr phpstan-intert-dump-type-templates)
+                    (car phpstan-intert-dump-type-templates))))
+    (move-end-of-line 1)
+    (newline-and-indent)
+    (insert template)
+    (search-backward "(" (line-beginning-position) t)
+    (forward-char)
+    (insert expression)))
 
 (provide 'phpstan)
 ;;; phpstan.el ends here
