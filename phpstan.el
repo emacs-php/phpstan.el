@@ -7,7 +7,7 @@
 ;; Version: 0.7.2
 ;; Keywords: tools, php
 ;; Homepage: https://github.com/emacs-php/phpstan.el
-;; Package-Requires: ((emacs "24.3") (compat "29") (php-mode "1.22.3") (php-runtime "0.2"))
+;; Package-Requires: ((emacs "25.1") (compat "29") (php-mode "1.22.3") (php-runtime "0.2"))
 ;; License: GPL-3.0-or-later
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -56,6 +56,7 @@
 (require 'cl-lib)
 (require 'php-project)
 (require 'php-runtime)
+(require 'seq)
 
 (eval-when-compile
   (require 'compat nil t)
@@ -154,7 +155,18 @@ have unexpected behaviors or performance implications."
   :type '(cons string string)
   :group 'phpstan)
 
+(defcustom phpstan-disable-buffer-errors nil
+  "If T, don't keep errors per buffer to save memory."
+  :type 'boolean
+  :group 'phpstan)
+
+(defcustom phpstan-not-ignorable-identifiers '("ignore.parseError")
+  "A list of identifiers that are prohibited from being added to the @phpstan-ignore tag."
+  :type '(repeat string))
+
 (defvar-local phpstan--use-xdebug-option nil)
+
+(defvar-local phpstan--ignorable-errors '())
 
 ;;;###autoload
 (progn
@@ -278,6 +290,10 @@ NIL
     (while plist
       (push (cons (substring-no-properties (symbol-name (pop plist)) 1) (pop plist)) alist))
     (nreverse alist)))
+
+(defsubst phpstan--current-line ()
+  "Return the current buffer line at point.  The first line is 1."
+  (line-number-at-pos nil t))
 
 ;; Functions:
 (defun phpstan-get-working-dir ()
@@ -496,6 +512,85 @@ it returns the value of `SOURCE' as it is."
             (phpstan-use-xdebug-option (list "--xdebug")))
            options
            (and args (cons "--" args)))))
+
+(defun phpstan-update-ignorebale-errors-from-json-buffer (errors)
+  "Update `phpstan--ignorable-errors' variable by ERRORS."
+  (let ((identifiers
+         (cl-loop for (_ . entry) in errors
+                  append (cl-loop for message in (plist-get entry :messages)
+                                  if (plist-get message :ignorable)
+                                  collect (cons (plist-get message :line)
+                                                (plist-get message :identifier))))))
+    (setq phpstan--ignorable-errors
+          (mapcar (lambda (v) (cons (car v) (mapcar #'cdr (cdr v)))) (seq-group-by #'car identifiers)))))
+
+(defconst phpstan--re-ignore-tag
+  (eval-when-compile
+    (rx (* (syntax whitespace)) "//" (* (syntax whitespace))
+        (group "@phpstan-ignore")
+        (* (syntax whitespace))
+        (* (not "("))
+        (group (? (+ (syntax whitespace) "("))))))
+
+(cl-defun phpstan--check-existing-ignore-tag (&key in-previous)
+  "Check existing @phpstan-ignore PHPDoc tag.
+If IN-PREVIOUS is NIL, check the previous line for the tag."
+  (let ((new-position (if in-previous 'previous-line 'this-line))
+        (line-end (line-end-position))
+        new-point append)
+    (save-excursion
+      (save-match-data
+        (if (re-search-forward phpstan--re-ignore-tag line-end t)
+            (progn
+              (setq new-point (match-beginning 2))
+              (goto-char new-point)
+              (when (eq (char-syntax (char-before)) ?\ )
+                (left-char)
+                (setq new-point (point)))
+              (setq append (not (eq (match-end 1) (match-beginning 2))))
+              (cl-values new-position new-point append))
+          (if in-previous
+              (cl-values nil nil nil)
+            (previous-logical-line)
+            (beginning-of-line)
+            (phpstan--check-existing-ignore-tag :in-previous t)))))))
+
+;;;###autoload
+(defun phpstan-insert-ignore (position)
+  "Insert an @phpstan-ignore comment at the specified POSITION.
+
+POSITION determines where to insert the comment and can be either `this-line' or
+`previous-line'.
+
+- If POSITION is `this-line', the comment is inserted at the end of
+  the current line.
+- If POSITION is `previous-line', the comment is inserted on a new line above
+  the current line."
+  (interactive
+   (list (if current-prefix-arg 'this-line 'previous-line)))
+  (save-restriction
+    (widen)
+    (let ((pos (point))
+          (identifiers (cl-set-difference (alist-get (phpstan--current-line) phpstan--ignorable-errors) phpstan-not-ignorable-identifiers :test #'equal))
+          (padding (if (eq position 'this-line) " " ""))
+          new-position new-point delete-region)
+      (cl-multiple-value-setq (new-position new-point append) (phpstan--check-existing-ignore-tag :in-previous nil))
+      (when new-position
+        (setq position new-position))
+      (unless (and append (null identifiers))
+        (if (not new-point)
+            (cond
+             ((eq position 'this-line) (end-of-line))
+             ((eq position 'previous-line) (progn
+                                             (previous-logical-line)
+                                             (end-of-line)
+                                             (newline-and-indent)))
+             ((error "Unexpected position: %s" position)))
+          (setq padding "")
+          (goto-char new-point))
+        (insert (concat padding
+                        (if new-position (if append ", " " ") "// @phpstan-ignore ")
+                        (mapconcat #'identity identifiers ", ")))))))
 
 ;;;###autoload
 (defun phpstan-insert-dumptype (&optional expression prefix-num)

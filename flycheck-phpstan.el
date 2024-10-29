@@ -81,6 +81,8 @@
                         (current-buffer)))
          (data (phpstan--parse-json json-buffer))
          (errors (phpstan--plist-to-alist (plist-get data :files))))
+    (unless phpstan-disable-buffer-errors
+      (phpstan-update-ignorebale-errors-from-json-buffer errors))
     (flycheck-phpstan--build-errors errors)))
 
 (defun flycheck-phpstan--temp-buffer ()
