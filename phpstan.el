@@ -477,7 +477,7 @@ it returns the value of `SOURCE' as it is."
             ((memq verbose '(1 t)) (list "-v"))
             ((eq verbose 2) (list "-vv"))
             ((eq verbose 3) (list "-vvv"))
-            (error ":verbose option should be 1, 2, 3 or `t'"))
+            ((error ":verbose option should be 1, 2, 3 or `t'")))
            (cond
             (phpstan--use-xdebug-option (list phpstan--use-xdebug-option))
             ((eq phpstan-use-xdebug-option 'auto)
@@ -498,10 +498,10 @@ it returns the value of `SOURCE' as it is."
         (buffer-substring-no-properties (region-beginning) (region-end))
       (or (thing-at-point 'symbol t) ""))
     current-prefix-arg))
-  (let ((template (if current-prefix-arg
+  (let ((template (if prefix-num
                       (cdr phpstan-intert-dump-type-templates)
                     (car phpstan-intert-dump-type-templates))))
-    (move-end-of-line 1)
+    (end-of-line)
     (newline-and-indent)
     (insert template)
     (search-backward "(" (line-beginning-position) t)
