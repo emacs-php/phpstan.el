@@ -45,7 +45,6 @@
 (defvar flycheck-phpstan-executable)
 (defvar flycheck-phpstan--temp-buffer-name "*Flycheck PHPStan*")
 
-
 (defcustom flycheck-phpstan-ignore-metadata-list nil
   "Set of metadata items to ignore in PHPStan messages for Flycheck."
   :type '(set (const identifier)
@@ -76,45 +75,42 @@
 
 (defun flycheck-phpstan-parse-output (output &optional _checker _buffer)
   "Parse PHPStan errors from OUTPUT."
-  (with-current-buffer (flycheck-phpstan--temp-buffer)
-    (erase-buffer)
-    (insert output))
-  (flycheck-phpstan-parse-json (flycheck-phpstan--temp-buffer)))
+  (let* ((json-buffer (with-current-buffer (flycheck-phpstan--temp-buffer)
+                        (erase-buffer)
+                        (insert output)
+                        (current-buffer)))
+         (data (phpstan--parse-json json-buffer))
+         (errors (phpstan--plist-to-alist (plist-get data :files))))
+    (unless phpstan-disable-buffer-errors
+      (phpstan-update-ignorebale-errors-from-json-buffer errors))
+    (flycheck-phpstan--build-errors errors)))
 
 (defun flycheck-phpstan--temp-buffer ()
   "Return a temporary buffer for decode JSON."
   (get-buffer-create flycheck-phpstan--temp-buffer-name))
 
-(defun flycheck-phpstan-parse-json (json-buffer)
-  "Parse PHPStan errors from JSON-BUFFER."
-  (let ((data (phpstan--parse-json json-buffer)))
-    (cl-loop for (file . entry) in (flycheck-phpstan--plist-to-alist (plist-get data :files))
-             append (cl-loop for messages in (plist-get entry :messages)
-                             for text = (let* ((msg (plist-get messages :message))
-                                               (ignorable (plist-get messages :ignorable))
-                                               (identifier (unless (memq 'identifier flycheck-phpstan-ignore-metadata-list)
-                                                             (plist-get messages :identifier)))
-                                               (tip (unless (memq 'tip flycheck-phpstan-ignore-metadata-list)
-                                                      (plist-get messages :tip)))
-                                               (lines (list (when (and identifier ignorable)
-                                                              (concat phpstan-identifier-prefix identifier))
-                                                            (when tip
-                                                              (concat phpstan-tip-message-prefix tip))))
-                                               (lines (cl-remove-if #'null lines)))
-                                          (if (null lines)
-                                              msg
-                                            (concat msg flycheck-phpstan-metadata-separator
-                                                    (mapconcat #'identity lines "\n"))))
-                             collect (flycheck-error-new-at (plist-get messages :line)
-                                                            nil 'error text
-                                                            :filename file)))))
-
-(defun flycheck-phpstan--plist-to-alist (plist)
-  "Convert PLIST to association list."
-  (let (alist)
-    (while plist
-      (push (cons (substring-no-properties (symbol-name (pop plist)) 1) (pop plist)) alist))
-    (nreverse alist)))
+(defun flycheck-phpstan--build-errors (errors)
+  "Build Flycheck errors from PHPStan ERRORS."
+  (cl-loop for (file . entry) in errors
+           append (cl-loop for messages in (plist-get entry :messages)
+                           for text = (let* ((msg (plist-get messages :message))
+                                             (ignorable (plist-get messages :ignorable))
+                                             (identifier (unless (memq 'identifier flycheck-phpstan-ignore-metadata-list)
+                                                           (plist-get messages :identifier)))
+                                             (tip (unless (memq 'tip flycheck-phpstan-ignore-metadata-list)
+                                                    (plist-get messages :tip)))
+                                             (lines (list (when (and identifier ignorable)
+                                                            (concat phpstan-identifier-prefix identifier))
+                                                          (when tip
+                                                            (concat phpstan-tip-message-prefix tip))))
+                                             (lines (cl-remove-if #'null lines)))
+                                        (if (null lines)
+                                            msg
+                                          (concat msg flycheck-phpstan-metadata-separator
+                                                  (mapconcat #'identity lines "\n"))))
+                           collect (flycheck-error-new-at (plist-get messages :line)
+                                                          nil 'error text
+                                                          :filename file))))
 
 (flycheck-define-checker phpstan
   "PHP static analyzer based on PHPStan."
