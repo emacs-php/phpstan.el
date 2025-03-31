@@ -2,12 +2,25 @@
 
 All notable changes of the `phpstan.el` are documented in this file using the [Keep a Changelog](https://keepachangelog.com/) principles.
 
-## Unreleased
+<!-- ## Unreleased -->
+
+## [0.8.1]
 
 ### Added
 
 * Add `phpstan-enable-remote-experimental` custom variable for activate PHPStan on TRAMP.
 * Add support for `php-ts-mode`.
+* Add `phpstan-insert-dumptype` command
+* Add `phpstan-insert-ignore` command
+
+### Changed
+
+* Refactored `phpstan-check-buffer` command for improved performance.
+* Improved logic for detecting phpstan executable.
+
+### Removed
+
+* Drop support for Emacs 24.3.
 
 ## [0.7.0]
 
