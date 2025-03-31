@@ -61,7 +61,9 @@
 (eval-when-compile
   (require 'compat nil t)
   (require 'php)
-  (require 'json))
+  (require 'json)
+  (declare-function 'tramp-dissect-file-name "tramp" '(name &optional nodefault))
+  (declare-function 'tramp-file-name-localname "tamp" '(cl-x)))
 
 ;; Variables:
 (defgroup phpstan nil
@@ -161,7 +163,7 @@ have unexpected behaviors or performance implications."
   :group 'phpstan)
 
 (defcustom phpstan-not-ignorable-identifiers '("ignore.parseError")
-  "A list of identifiers that are prohibited from being added to the @phpstan-ignore tag."
+  "Lists identifiers prohibited from being added to @phpstan-ignore tags."
   :type '(repeat string))
 
 (defvar-local phpstan--use-xdebug-option nil)
@@ -570,10 +572,9 @@ POSITION determines where to insert the comment and can be either `this-line' or
    (list (if current-prefix-arg 'this-line 'previous-line)))
   (save-restriction
     (widen)
-    (let ((pos (point))
-          (identifiers (cl-set-difference (alist-get (phpstan--current-line) phpstan--ignorable-errors) phpstan-not-ignorable-identifiers :test #'equal))
+    (let ((identifiers (cl-set-difference (alist-get (phpstan--current-line) phpstan--ignorable-errors) phpstan-not-ignorable-identifiers :test #'equal))
           (padding (if (eq position 'this-line) " " ""))
-          new-position new-point delete-region)
+          new-position new-point append)
       (cl-multiple-value-setq (new-position new-point append) (phpstan--check-existing-ignore-tag :in-previous nil))
       (when new-position
         (setq position new-position))
