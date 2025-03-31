@@ -4,6 +4,12 @@ All notable changes of the `phpstan.el` are documented in this file using the [K
 
 <!-- ## Unreleased -->
 
+## [0.8.2]
+
+### Fixed
+
+* Fix compilation errors on Emacs 30
+
 ## [0.8.1]
 
 ### Added

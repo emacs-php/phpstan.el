@@ -1,5 +1,5 @@
 (package "phpstan"
-         "0.7.2"
+         "0.8.2"
          "Interface to PHPStan (PHP static analyzer)")
 
 (website-url "https://github.com/emacs-php/phpstan.el")
