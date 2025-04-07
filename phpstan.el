@@ -158,7 +158,7 @@ have unexpected behaviors or performance implications."
   :group 'phpstan)
 
 (defcustom phpstan-disable-buffer-errors nil
-  "If T, don't keep errors per buffer to save memory."
+  "If non-NIL, don't keep errors per buffer to save memory."
   :type 'boolean
   :group 'phpstan)
 
@@ -172,7 +172,7 @@ have unexpected behaviors or performance implications."
 
 ;;;###autoload
 (progn
-  (defvar phpstan-working-dir nil
+  (defvar-local phpstan-working-dir nil
     "Path to working directory of PHPStan.
 
 *NOTICE*: This is different from the project root.
@@ -185,7 +185,6 @@ STRING
 
 NIL
      Use (php-project-get-root-dir) as working directory.")
-  (make-variable-buffer-local 'phpstan-working-dir)
   (put 'phpstan-working-dir 'safe-local-variable
        #'(lambda (v) (if (consp v)
                          (and (eq 'root (car v)) (stringp (cdr v)))
@@ -193,7 +192,7 @@ NIL
 
 ;;;###autoload
 (progn
-  (defvar phpstan-config-file nil
+  (defvar-local phpstan-config-file nil
     "Path to project specific configuration file of PHPStan.
 
 STRING
@@ -204,7 +203,6 @@ STRING
 
 NIL
      Search phpstan.neon(.dist) in (phpstan-get-working-dir).")
-  (make-variable-buffer-local 'phpstan-config-file)
   (put 'phpstan-config-file 'safe-local-variable
        #'(lambda (v) (if (consp v)
                          (and (eq 'root (car v)) (stringp (cdr v)))
@@ -243,25 +241,24 @@ max
 NIL
      Use rule level specified in `phpstan' configuration file.")
   (put 'phpstan-level 'safe-local-variable
-       #'(lambda (v) (or (null v)
-                         (integerp v)
-                         (eq 'max v)
-                         (and (stringp v)
-                              (string= "max" v)
-                              (string-match-p "\\`[0-9]\\'" v))))))
+       (lambda (v) (or (null v)
+                       (integerp v)
+                       (eq 'max v)
+                       (and (stringp v)
+                            (or (string= "max" v)
+                                (string-match-p "\\`[0-9]\\'" v)))))))
 
 ;;;###autoload
 (progn
-  (defvar phpstan-replace-path-prefix)
-  (make-variable-buffer-local 'phpstan-replace-path-prefix)
+  (defvar-local phpstan-replace-path-prefix nil)
   (put 'phpstan-replace-path-prefix 'safe-local-variable
-       #'(lambda (v) (or (null v) (stringp v)))))
+       (lambda (v) (or (null v) (stringp v)))))
 
 (defconst phpstan-docker-executable "docker")
 
 ;;;###autoload
 (progn
-  (defvar phpstan-executable nil
+  (defvar-local phpstan-executable nil
     "PHPStan excutable file.
 
 STRING
@@ -278,7 +275,6 @@ STRING
 
 NIL
      Auto detect `phpstan' executable file.")
-  (make-variable-buffer-local 'phpstan-executable)
   (put 'phpstan-executable 'safe-local-variable
        #'(lambda (v) (if (consp v)
                          (or (and (eq 'root (car v)) (stringp (cdr v)))
@@ -349,7 +345,8 @@ it returns the value of `SOURCE' as it is."
              (cond
               ((eq 'docker phpstan-executable) "/app")
               ((and (consp phpstan-executable)
-                    (string= "docker" (car phpstan-executable))) "/app")))))
+                    (string= "docker" (car phpstan-executable)))
+               "/app")))))
     (if prefix
         (expand-file-name
          (replace-regexp-in-string (concat "\\`" (regexp-quote root-directory))
@@ -591,7 +588,7 @@ POSITION determines where to insert the comment and can be either `this-line' or
           (goto-char new-point))
         (insert (concat padding
                         (if new-position (if append ", " " ") "// @phpstan-ignore ")
-                        (mapconcat #'identity identifiers ", ")))))))
+                        (string-join identifiers ", ")))))))
 
 ;;;###autoload
 (defun phpstan-insert-dumptype (&optional expression prefix-num)

@@ -7,7 +7,7 @@
 ;; Version: 0.8.2
 ;; Keywords: tools, php
 ;; Homepage: https://github.com/emacs-php/phpstan.el
-;; Package-Requires: ((emacs "24.3") (flycheck "26") (phpstan "0.8.2"))
+;; Package-Requires: ((emacs "25.1") (flycheck "26") (phpstan "0.8.2"))
 ;; License: GPL-3.0-or-later
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -107,7 +107,7 @@
                                         (if (null lines)
                                             msg
                                           (concat msg flycheck-phpstan-metadata-separator
-                                                  (mapconcat #'identity lines "\n"))))
+                                                  (string-join lines "\n"))))
                            collect (flycheck-error-new-at (plist-get messages :line)
                                                           nil 'error text
                                                           :filename file))))
