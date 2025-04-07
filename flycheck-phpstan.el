@@ -79,7 +79,9 @@
                         (erase-buffer)
                         (insert output)
                         (current-buffer)))
-         (data (phpstan--parse-json json-buffer))
+         (data (if (string-prefix-p "{" output)
+                   (phpstan--parse-json json-buffer)
+                 (list (flycheck-error-new-at 1 1 'warning (string-trim output)))))
          (errors (phpstan--plist-to-alist (plist-get data :files))))
     (unless phpstan-disable-buffer-errors
       (phpstan-update-ignorebale-errors-from-json-buffer errors))
