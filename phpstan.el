@@ -372,17 +372,22 @@ it returns the value of `SOURCE' as it is."
   "Read JSON string from BUFFER."
   (with-current-buffer buffer
     (goto-char (point-min))
-    ;; Ignore STDERR
-    (save-match-data
-      (when (search-forward-regexp "^{" nil t)
-        (backward-char 1)
-        (delete-region (point-min) (point))))
-    (if (eval-when-compile (and (fboundp 'json-serialize)
-                                (fboundp 'json-parse-buffer)))
-        (with-no-warnings
-          (json-parse-buffer :object-type 'plist :array-type 'list))
-      (let ((json-object-type 'plist) (json-array-type 'list))
-        (json-read-object)))))
+    (if (not (looking-at-p "{"))
+        (let ((msg (string-trim (buffer-substring-no-properties (point-min) (point-max))))
+              (pattern (eval-when-compile (regexp-quote "No files found to analyse."))))
+          (prog1 nil
+            (unless (string-match-p pattern msg)
+              (message "[PHPStan]: %s" msg))))
+      ;; Ignore STDERR
+      (save-match-data
+        (when (search-forward-regexp "^{" nil t)
+          (backward-char 1)
+          (delete-region (point-min) (point))))
+      (static-if (and (fboundp 'json-serialize) (fboundp 'json-parse-buffer))
+          (with-no-warnings
+            (json-parse-buffer :object-type 'plist :array-type 'list))
+        (let ((json-object-type 'plist) (json-array-type 'list))
+          (json-read-object))))))
 
 (defun phpstan--expand-file-name (name)
   "Expand file name by NAME."
