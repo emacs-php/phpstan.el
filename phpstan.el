@@ -169,6 +169,7 @@ have unexpected behaviors or performance implications."
 (defvar-local phpstan--use-xdebug-option nil)
 
 (defvar-local phpstan--ignorable-errors '())
+(defvar-local phpstan--dumped-types '())
 
 ;;;###autoload
 (progn
@@ -523,6 +524,17 @@ it returns the value of `SOURCE' as it is."
     (setq phpstan--ignorable-errors
           (mapcar (lambda (v) (cons (car v) (mapcar #'cdr (cdr v)))) (seq-group-by #'car identifiers)))))
 
+(defun phpstan-update-dumped-types (errors)
+  "Update `phpstan--dumped-types' variable by ERRORS."
+  (save-match-data
+    (setq phpstan--dumped-types
+          (cl-loop for (_ . entry) in errors
+                   append (cl-loop for message in (plist-get entry :messages)
+                                   for msg = (plist-get message :message)
+                                   if (string-match (eval-when-compile (rx bos "Dumped type: ")) msg)
+                                   collect (cons (plist-get message :line)
+                                                 (substring-no-properties msg (match-end 0))))))))
+
 (defconst phpstan--re-ignore-tag
   (eval-when-compile
     (rx (* (syntax whitespace)) "//" (* (syntax whitespace))
@@ -589,6 +601,19 @@ POSITION determines where to insert the comment and can be either `this-line' or
         (insert (concat padding
                         (if new-position (if append ", " " ") "// @phpstan-ignore ")
                         (string-join identifiers ", ")))))))
+
+;;;###autoload
+(defun phpstan-copy-dumped-type ()
+  "Copy a dumped PHPStan type."
+  (interactive)
+  (if phpstan--dumped-types
+      (let ((type (if (eq 1 (length phpstan--dumped-types))
+                      (cdar phpstan--dumped-types)
+                    (let ((linum (line-number-at-pos)))
+                      (cdar (seq-sort-by (lambda (elm) (abs (- linum (car elm)))) #'< phpstan--dumped-types))))))
+        (kill-new type)
+        (message "Copied %s" type))
+    (user-error "No dumped PHPStan types")))
 
 ;;;###autoload
 (defun phpstan-insert-dumptype (&optional expression prefix-num)

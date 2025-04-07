@@ -83,6 +83,7 @@
          (errors (phpstan--plist-to-alist (plist-get data :files))))
     (unless phpstan-disable-buffer-errors
       (phpstan-update-ignorebale-errors-from-json-buffer errors))
+    (phpstan-update-dumped-types errors)
     (flycheck-phpstan--build-errors errors)))
 
 (defun flycheck-phpstan--temp-buffer ()

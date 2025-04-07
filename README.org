@@ -105,6 +105,14 @@ Insert a ~@phpstan-ignore~ tag to suppress any PHPStan errors on the current lin
 By default it inserts the tag on the previous line, but if there is already a tag at the end of the current line or on the previous line, the identifiers will be appended there.
 
 If there is no existing tag and ~C-u~ is pressed before the command, it will be inserted at the end of the line.
+*** Command ~phpstan-copy-dumped-type~
+Copy the nearest dumped type message from PHPStan's output.
+
+This command looks for messages like ~Dumped type: int|string|null~ reported by ~PHPStan\dumpType()~ or ~PHPStan\dumpPhpDocType()~, and copies the type string to the kill ring.
+
+If there are multiple dumped types in the buffer, it selects the one closest to the current line.
+
+If no dumped type messages are found, the command signals an error.
 ** API
 Most variables defined in this package are buffer local.  If you want to set it for multiple projects, use [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Default-Value.html][setq-default]].
 
