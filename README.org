@@ -5,7 +5,7 @@
 #+END_HTML
 Emacs interface to [[https://github.com/phpstan/phpstan][PHPStan]], includes checker for [[http://www.flycheck.org/en/latest/][Flycheck]].
 ** Support version
-- Emacs 24+
+- Emacs 25+
 - PHPStan latest/dev-master (NOT support 0.9 seriese)
 - PHP 7.1+ or Docker runtime
 ** How to install
@@ -88,7 +88,31 @@ Typically, you would set the following ~.dir-locals.el~.
 #+END_SRC
 
 If there is a ~phpstan.neon~ file in the root directory of the project, you do not need to set both ~phpstan-working-dir~ and ~phpstan-config-file~.
+** Commands
+This package provides convenient commands for using PHPStan from Emacs.
+*** Command ~phpstan-insert-dumptype~
+Add ~\PHPStan\dumpType(...);~ to your PHP code and analyze it to make PHPStan display the type of the expression.
+#+BEGIN_SRC
+(define-key php-mode-map (kbd "C-c ^") #'phpstan-insert-dumptype)
+#+END_SRC
 
+By default, if you press ~C-u~ before invoking the command, ~\PHPStan\dumpPhpDocType()~ will be inserted.
+
+This feature was added in *PHPStan 1.12.7* and will dump types compatible with the ~@param~ and ~@return~ PHPDoc tags.
+*** Command ~phpstan-insert-ignore~
+Insert a ~@phpstan-ignore~ tag to suppress any PHPStan errors on the current line.
+
+By default it inserts the tag on the previous line, but if there is already a tag at the end of the current line or on the previous line, the identifiers will be appended there.
+
+If there is no existing tag and ~C-u~ is pressed before the command, it will be inserted at the end of the line.
+*** Command ~phpstan-copy-dumped-type~
+Copy the nearest dumped type message from PHPStan's output.
+
+This command looks for messages like ~Dumped type: int|string|null~ reported by ~PHPStan\dumpType()~ or ~PHPStan\dumpPhpDocType()~, and copies the type string to the kill ring.
+
+If there are multiple dumped types in the buffer, it selects the one closest to the current line.
+
+If no dumped type messages are found, the command signals an error.
 ** API
 Most variables defined in this package are buffer local.  If you want to set it for multiple projects, use [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Default-Value.html][setq-default]].
 

@@ -1,13 +1,13 @@
 ;;; flycheck-phpstan.el --- Flycheck integration for PHPStan  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2023  Friends of Emacs-PHP development
+;; Copyright (C) 2025  Friends of Emacs-PHP development
 
 ;; Author: USAMI Kenta <tadsan@zonu.me>
 ;; Created: 15 Mar 2018
-;; Version: 0.7.2
+;; Version: 0.8.2
 ;; Keywords: tools, php
 ;; Homepage: https://github.com/emacs-php/phpstan.el
-;; Package-Requires: ((emacs "24.3") (flycheck "26") (phpstan "0.7.2"))
+;; Package-Requires: ((emacs "25.1") (flycheck "26") (phpstan "0.8.2"))
 ;; License: GPL-3.0-or-later
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,18 @@
 (defvar flycheck-phpstan-executable)
 (defvar flycheck-phpstan--temp-buffer-name "*Flycheck PHPStan*")
 
+(defcustom flycheck-phpstan-ignore-metadata-list nil
+  "Set of metadata items to ignore in PHPStan messages for Flycheck."
+  :type '(set (const identifier)
+              (const tip))
+  :group 'phpstan)
+
+(defcustom flycheck-phpstan-metadata-separator "\n"
+  "Separator of PHPStan message and metadata."
+  :type 'string
+  :safe #'stringp
+  :group 'phpstan)
+
 (defun flycheck-phpstan--enabled-and-set-variable ()
   "Return path to phpstan configure file, and set buffer execute in side effect."
   (let ((enabled (phpstan-enabled)))
@@ -63,45 +75,45 @@
 
 (defun flycheck-phpstan-parse-output (output &optional _checker _buffer)
   "Parse PHPStan errors from OUTPUT."
-  (let ((filename (buffer-file-name))
-        (buffer (current-buffer)))
-    (with-current-buffer (flycheck-phpstan--temp-buffer)
-      (erase-buffer)
-      (insert output)
-      (goto-char (point-min))
-      ;; PHPStan might just output the "No files found to analyse"
-      ;; string and no JSON if the file was excluded by phpstan.neon.
-      ;; Which will make JSON parsing fail and break flycheck.
-      (if (search-forward "No files found to analyse" 500 t)
-          (list (flycheck-error-new-at 1 1 'warning "PHPStan: File ignored by configuration"
-                                       :filename filename :buffer buffer))
-        (goto-char (point-max))
-        (flycheck-phpstan-parse-json (flycheck-phpstan--temp-buffer))))))
+  (let* ((json-buffer (with-current-buffer (flycheck-phpstan--temp-buffer)
+                        (erase-buffer)
+                        (insert output)
+                        (current-buffer)))
+         (data (if (string-prefix-p "{" output)
+                   (phpstan--parse-json json-buffer)
+                 (list (flycheck-error-new-at 1 1 'warning (string-trim output)))))
+         (errors (phpstan--plist-to-alist (plist-get data :files))))
+    (unless phpstan-disable-buffer-errors
+      (phpstan-update-ignorebale-errors-from-json-buffer errors))
+    (phpstan-update-dumped-types errors)
+    (flycheck-phpstan--build-errors errors)))
 
 (defun flycheck-phpstan--temp-buffer ()
   "Return a temporary buffer for decode JSON."
   (get-buffer-create flycheck-phpstan--temp-buffer-name))
 
-(defun flycheck-phpstan-parse-json (json-buffer)
-  "Parse PHPStan errors from JSON-BUFFER."
-  (let ((data (phpstan--parse-json json-buffer)))
-    (cl-loop for (file . entry) in (flycheck-phpstan--plist-to-alist (plist-get data :files))
-             append (cl-loop for messages in (plist-get entry :messages)
-                             for text = (let ((msg (plist-get messages :message))
-                                              (tip (plist-get messages :tip)))
-                                          (if tip
-                                              (concat msg "\n" phpstan-tip-message-prefix tip)
-                                            msg))
-                             collect (flycheck-error-new-at (plist-get messages :line)
-                                                            nil 'error text
-                                                            :filename file)))))
-
-(defun flycheck-phpstan--plist-to-alist (plist)
-  "Convert PLIST to association list."
-  (let (alist)
-    (while plist
-      (push (cons (substring-no-properties (symbol-name (pop plist)) 1) (pop plist)) alist))
-    (nreverse alist)))
+(defun flycheck-phpstan--build-errors (errors)
+  "Build Flycheck errors from PHPStan ERRORS."
+  (cl-loop for (file . entry) in errors
+           append (cl-loop for messages in (plist-get entry :messages)
+                           for text = (let* ((msg (plist-get messages :message))
+                                             (ignorable (plist-get messages :ignorable))
+                                             (identifier (unless (memq 'identifier flycheck-phpstan-ignore-metadata-list)
+                                                           (plist-get messages :identifier)))
+                                             (tip (unless (memq 'tip flycheck-phpstan-ignore-metadata-list)
+                                                    (plist-get messages :tip)))
+                                             (lines (list (when (and identifier ignorable)
+                                                            (concat phpstan-identifier-prefix identifier))
+                                                          (when tip
+                                                            (concat phpstan-tip-message-prefix tip))))
+                                             (lines (cl-remove-if #'null lines)))
+                                        (if (null lines)
+                                            msg
+                                          (concat msg flycheck-phpstan-metadata-separator
+                                                  (string-join lines "\n"))))
+                           collect (flycheck-error-new-at (plist-get messages :line)
+                                                          nil 'error text
+                                                          :filename file))))
 
 (flycheck-define-checker phpstan
   "PHP static analyzer based on PHPStan."
@@ -113,7 +125,7 @@
   :working-directory (lambda (_) (phpstan-get-working-dir))
   :enabled (lambda () (flycheck-phpstan--enabled-and-set-variable))
   :error-parser flycheck-phpstan-parse-output
-  :modes (php-mode phps-mode))
+  :modes (php-mode php-ts-mode phps-mode))
 
 (add-to-list 'flycheck-checkers 'phpstan t)
 (flycheck-add-next-checker 'php 'phpstan)
