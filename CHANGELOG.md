@@ -2,7 +2,11 @@
 
 All notable changes of the `phpstan.el` are documented in this file using the [Keep a Changelog](https://keepachangelog.com/) principles.
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Added
+
+* Add `phpstan-copy-dumped-type` command to copy the nearest dumped type from `PHPStan\dumpType()` or `PHPStan\dumpPhpDocType()` messages.
 
 ## [0.8.2]
 
