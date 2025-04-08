@@ -44,6 +44,8 @@
 ;; Usually it is defined dynamically by flycheck
 (defvar flycheck-phpstan-executable)
 (defvar flycheck-phpstan--temp-buffer-name "*Flycheck PHPStan*")
+(defvar flycheck-phpstan--output-filter-added nil)
+(defconst flycheck-phpstan--nofiles-message (eval-when-compile (regexp-quote "[ERROR] No files found to analyse.")))
 
 (defcustom flycheck-phpstan-ignore-metadata-list nil
   "Set of metadata items to ignore in PHPStan messages for Flycheck."
@@ -56,6 +58,24 @@
   :type 'string
   :safe #'stringp
   :group 'phpstan)
+
+(defun flycheck-phpstan--suppress-no-files-error  (next checker exit-status files output callback cwd)
+  "Suppress Flycheck errors if PHPStan reports no files in a modified buffer.
+
+This function is intended to be used as an :around advice for
+`flycheck-finish-checker-process'.
+
+It prevents Flycheck from displaying an error when:
+- CHECKER is `phpstan',
+- the current buffer is modified,
+- and OUTPUT contains the message `flycheck-phpstan--nofiles-message'.
+
+NEXT, EXIT-STATUS, FILES, OUTPUT, CALLBACK, and CWD are the original arguments
+passed to `flycheck-finish-checker-process'."
+  (unless (and (eq checker 'phpstan)
+               (buffer-modified-p)
+               (string-match-p flycheck-phpstan--nofiles-message output))
+    (funcall next checker exit-status files output callback cwd)))
 
 (defun flycheck-phpstan--enabled-and-set-variable ()
   "Return path to phpstan configure file, and set buffer execute in side effect."
@@ -71,6 +91,10 @@
                      (and (stringp (car-safe phpstan-executable))
                           (listp (cdr-safe phpstan-executable)))
                      (null phpstan-executable)))
+        (unless flycheck-phpstan--output-filter-added
+          (advice-add 'flycheck-finish-checker-process
+                      :around #'flycheck-phpstan--suppress-no-files-error)
+          (setq flycheck-phpstan--output-filter-added t))
         (setq-local flycheck-phpstan-executable (car (phpstan-get-executable-and-args)))))))
 
 (defun flycheck-phpstan-parse-output (output &optional _checker _buffer)
