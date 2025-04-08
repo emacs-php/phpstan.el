@@ -81,6 +81,10 @@ passed to `flycheck-finish-checker-process'."
   "Return path to phpstan configure file, and set buffer execute in side effect."
   (let ((enabled (phpstan-enabled)))
     (prog1 enabled
+      (unless flycheck-phpstan--output-filter-added
+        (advice-add 'flycheck-finish-checker-process
+                    :around #'flycheck-phpstan--suppress-no-files-error)
+        (setq flycheck-phpstan--output-filter-added t))
       (when (and enabled
                  phpstan-flycheck-auto-set-executable
                  (null (bound-and-true-p flycheck-phpstan-executable))
@@ -91,10 +95,6 @@ passed to `flycheck-finish-checker-process'."
                      (and (stringp (car-safe phpstan-executable))
                           (listp (cdr-safe phpstan-executable)))
                      (null phpstan-executable)))
-        (unless flycheck-phpstan--output-filter-added
-          (advice-add 'flycheck-finish-checker-process
-                      :around #'flycheck-phpstan--suppress-no-files-error)
-          (setq flycheck-phpstan--output-filter-added t))
         (setq-local flycheck-phpstan-executable (car (phpstan-get-executable-and-args)))))))
 
 (defun flycheck-phpstan-parse-output (output &optional _checker _buffer)
