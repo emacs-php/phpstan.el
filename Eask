@@ -1,3 +1,5 @@
+;; -*- mode: eask; lexical-binding: t -*-
+
 (package "phpstan"
          "0.8.2"
          "Interface to PHPStan (PHP static analyzer)")
