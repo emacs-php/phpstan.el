@@ -52,6 +52,11 @@
   :type 'boolean
   :group 'flymake-phpstan)
 
+(defcustom flycheck-phpstan-fallback-to-original-analysis-if-editor-mode-unavailable t
+  "If non-NIL, analyze the original file when PHPStan editor mode is unavailable."
+  :type 'boolean
+  :safe #'booleanp)
+
 (defvar-local flymake-phpstan--proc nil)
 
 (defun flymake-phpstan-make-process (root command-args report-fn source)
@@ -88,6 +93,17 @@
             (kill-buffer (process-buffer proc))))
          (code (user-error "PHPStan error (exit status: %s)" code)))))))
 
+(defun flymake-phpstan-analyze-original (original)
+  "Return non-NIL if ORIGINAL is NIL, fallback is enabled, and buffer is modified."
+  (and (null original)
+       flymake-phpstan-fallback-to-original-analysis-if-editor-mode-unavailable
+       (buffer-modified-p)))
+
+(defun flymake-phpstan--create-temp-file ()
+  "Create temp file and return the path."
+  (phpstan-normalize-path
+   (flymake-proc-init-create-temp-buffer-copy 'flymake-proc-create-temp-inplace)))
+
 (defun flymake-phpstan (report-fn &rest _ignored-args)
   "Flymake backend for PHPStan report using REPORT-FN."
   (let ((command-args (phpstan-get-command-args :include-executable t)))
@@ -95,14 +111,18 @@
       (user-error "Cannot find a phpstan executable command"))
     (when (process-live-p flymake-phpstan--proc)
       (kill-process flymake-phpstan--proc))
-    (let ((source (current-buffer))
-          (target-path (if (or (buffer-modified-p) (not buffer-file-name))
-                           (phpstan-normalize-path
-                            (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace))
-                         buffer-file-name)))
+    (let* ((source (current-buffer))
+           (args (phpstan-get-command-args
+                  :include-executable t
+                  :format "raw"
+                  :editor (list
+                           :analyze-original #'flymake-phpstan-analyze-original
+                           :original-file buffer-file-name
+                           :temp-file #'flymake-phpstan--create-temp-file
+                           :inplace #'flymake-phpstan--create-temp-file))))
       (save-restriction
         (widen)
-        (setq flymake-phpstan--proc (flymake-phpstan-make-process (php-project-get-root-dir) (append command-args (list "--" target-path)) report-fn source))
+        (setq flymake-phpstan--proc (flymake-phpstan-make-process (php-project-get-root-dir) args report-fn source))
         (process-send-region flymake-phpstan--proc (point-min) (point-max))
         (process-send-eof flymake-phpstan--proc)))))
 
@@ -115,7 +135,7 @@
       (flymake-mode 1)
       (when flymake-phpstan-disable-c-mode-hooks
         (remove-hook 'flymake-diagnostic-functions #'flymake-cc t))
-      (add-hook 'flymake-diagnostic-functions #'flymake-phpstan nil t))))
+      (add-hook 'flymake-diagnostic-functions #'flymake-phpstan nil 'local))))
 
 (provide 'flymake-phpstan)
 ;;; flymake-phpstan.el ends here

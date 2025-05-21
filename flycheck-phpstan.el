@@ -77,6 +77,11 @@ passed to `flycheck-finish-checker-process'."
                (string-match-p flycheck-phpstan--nofiles-message output))
     (funcall next checker exit-status files output callback cwd)))
 
+(defcustom flycheck-phpstan-fallback-to-original-analysis-if-editor-mode-unavailable t
+  "If non-NIL, analyze the original file when PHPStan editor mode is unavailable."
+  :type 'boolean
+  :safe #'booleanp)
+
 (defun flycheck-phpstan--enabled-and-set-variable ()
   "Return path to phpstan configure file, and set buffer execute in side effect."
   (let ((enabled (phpstan-enabled)))
@@ -139,13 +144,23 @@ passed to `flycheck-finish-checker-process'."
                                                           nil 'error text
                                                           :filename file))))
 
+(defun flycheck-phpstan-analyze-original (original)
+  "Return non-NIL if ORIGINAL is NIL, fallback is enabled, and buffer is modified."
+  (and (null original)
+       flycheck-phpstan-fallback-to-original-analysis-if-editor-mode-unavailable
+       (buffer-modified-p)))
+
 (flycheck-define-checker phpstan
   "PHP static analyzer based on PHPStan."
-  :command ("php" (eval (phpstan-get-command-args :format "json"))
-            (eval (if (or (buffer-modified-p) (not buffer-file-name))
-                      (phpstan-normalize-path
-                       (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace))
-                    buffer-file-name)))
+  :command ("php"
+            (eval
+             (phpstan-get-command-args
+              :format "json"
+              :editor (list
+                       :analyze-original #'flycheck-phpstan-analyze-original
+                       :original-file buffer-file-name
+                       :temp-file (lambda () (flycheck-save-buffer-to-temp #'flycheck-temp-file-system))
+                       :inplace (lambda () (flycheck-save-buffer-to-temp #'flycheck-temp-file-inplace))))))
   :working-directory (lambda (_) (phpstan-get-working-dir))
   :enabled (lambda () (flycheck-phpstan--enabled-and-set-variable))
   :error-parser flycheck-phpstan-parse-output
