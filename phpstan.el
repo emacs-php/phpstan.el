@@ -166,10 +166,19 @@ have unexpected behaviors or performance implications."
   "Lists identifiers prohibited from being added to @phpstan-ignore tags."
   :type '(repeat string))
 
+(defcustom phpstan-activate-editor-mode nil
+  "Controls how PHPStan's editor mode is activated."
+  :local t
+  :type '(choice (const :tag "Automatic (based on version)" nil)
+                 (const :tag "Editor mode will be actively enabled, regardless of the PHPStan version." 'enabled)
+                 (const :tag "Editor mode will be explicitly disabled." 'disabled)))
+
 (defvar-local phpstan--use-xdebug-option nil)
 
 (defvar-local phpstan--ignorable-errors '())
 (defvar-local phpstan--dumped-types '())
+
+(defvar phpstan-executable-versions-alist '())
 
 ;;;###autoload
 (progn
@@ -479,7 +488,7 @@ it returns the value of `SOURCE' as it is."
        ((executable-find "phpstan") (list (executable-find "phpstan")))
        (t (error "PHPStan executable not found")))))))
 
-(cl-defun phpstan-get-command-args (&key include-executable use-pro args format options config verbose)
+(cl-defun phpstan-get-command-args (&key include-executable use-pro args format options config verbose editor)
   "Return command line argument for PHPStan."
   (let ((executable-and-args (phpstan-get-executable-and-args))
         (config (or config (phpstan-normalize-path (phpstan-get-config-file))))
@@ -510,6 +519,15 @@ it returns the value of `SOURCE' as it is."
                            "--xdebug"))
              (list phpstan--use-xdebug-option))
             (phpstan-use-xdebug-option (list "--xdebug")))
+           (when editor
+             (let ((original-file (plist-get editor :original-file)))
+               (if (phpstan-editor-mode-available-p (car (phpstan-get-executable-and-args)))
+                   (list "--tmp-file" (funcall (plist-get editor :temp-file))
+                         "--instead-of" original-file
+                         "--" original-file)
+                 (if (funcall (plist-get editor :analyze-original) original-file)
+                     (list "--" original-file)
+                   (list "--" (funcall (plist-get editor :inplace)))))))
            options
            (and args (cons "--" args)))))
 
@@ -534,6 +552,37 @@ it returns the value of `SOURCE' as it is."
                                    if (string-match (eval-when-compile (rx bos "Dumped type: ")) msg)
                                    collect (cons (plist-get message :line)
                                                  (substring-no-properties msg (match-end 0))))))))
+
+(defun phpstan-version (executable)
+  "Return the PHPStan version of EXECUTABLE."
+  (if-let* ((cached-entry (assoc executable phpstan-executable-versions-alist)))
+      (cdr cached-entry)
+    (let* ((version (thread-first
+                      (mapconcat #'shell-quote-argument (list executable "--version") " ")
+                      (shell-command-to-string)
+                      (string-trim-right)
+                      (split-string " ")
+                      (last)
+                      (car-safe))))
+      (prog1 version
+        (push (cons executable version) phpstan-executable-versions-alist)))))
+
+(defun phpstan-editor-mode-available-p (executable)
+  "Check if the specified PHPStan EXECUTABLE supports editor mode.
+
+If a cached result for EXECUTABLE exists, it is returned directly.
+Otherwise, this function attempts to determine support by retrieving
+the PHPStan version using 'phpstan --version' command."
+  (pcase phpstan-activate-editor-mode
+    ('enabled t)
+    ('disabled nil)
+    ('nil
+     (let* ((version (phpstan-version executable)))
+       (if (string-match-p (eval-when-compile (regexp-quote "-dev@")) version)
+           t
+         (pcase (elt version 0)
+           (?1 (version<= "1.12.27" version))
+           (?2 (version<= "2.1.17" version))))))))
 
 (defconst phpstan--re-ignore-tag
   (eval-when-compile

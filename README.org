@@ -5,9 +5,14 @@
 #+END_HTML
 Emacs interface to [[https://github.com/phpstan/phpstan][PHPStan]], includes checker for [[http://www.flycheck.org/en/latest/][Flycheck]].
 ** Support version
-- Emacs 25+
+- Emacs 26+
 - PHPStan latest/dev-master (NOT support 0.9 seriese)
 - PHP 7.1+ or Docker runtime
+
+> [!TIP]
+> This package provides support for the [editor mode](https://phpstan.org/user-guide/editor-mode) that will be added in PHPStan 2.1.17 and 1.12.27.
+> **We strongly recommend that you always update to the latest PHPStan.**
+
 ** How to install
 *** Install from MELPA
  1. If you have not set up MELPA, see [[https://melpa.org/#/getting-started][Getting Started - MELPA]].
