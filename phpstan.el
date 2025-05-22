@@ -77,13 +77,11 @@
 
 (defcustom phpstan-flycheck-auto-set-executable t
   "Set flycheck phpstan-executable automatically."
-  :type 'boolean
-  :group 'phpstan)
+  :type 'boolean)
 
 (defcustom phpstan-enable-on-no-config-file t
   "If T, activate config from composer even when `phpstan.neon' is not found."
-  :type 'boolean
-  :group 'phpstan)
+  :type 'boolean)
 
 (defcustom phpstan-memory-limit nil
   "Set --memory-limit option."
@@ -92,7 +90,7 @@
   :link '(url-link :tag "PHP Manual"
                    "https://www.php.net/manual/ini.core.php#ini.memory-limit")
   :safe (lambda (v) (or (null v) (stringp v)))
-  :group 'phpstan)
+  :local t)
 
 (defcustom phpstan-docker-image "ghcr.io/phpstan/phpstan"
   "Docker image URL or Docker Hub image name or NIL."
@@ -104,7 +102,7 @@
   :link '(url-link :tag "GitHub Container Registry"
                    "https://github.com/orgs/phpstan/packages/container/package/phpstan")
   :safe (lambda (v) (or (null v) (stringp v)))
-  :group 'phpstan)
+  :local t)
 
 (defcustom phpstan-use-xdebug-option nil
   "Set --xdebug option."
@@ -112,31 +110,31 @@
                  (const :tag "Add --xdebug option" t)
                  (const :tag "No --xdebug option" nil))
   :safe #'symbolp
-  :group 'phpstan)
+  :local t)
 
 (defcustom phpstan-generate-baseline-options '("--generate-baseline" "--allow-empty-baseline")
   "Command line options for generating PHPStan baseline."
   :type '(repeat string)
   :safe #'listp
-  :group 'phpstan)
+  :local t)
 
 (defcustom phpstan-baseline-file "phpstan-baseline.neon"
   "File name of PHPStan baseline file."
   :type 'string
   :safe #'stringp
-  :group 'phpstan)
+  :local t)
 
 (defcustom phpstan-tip-message-prefix "💡 "
   "Prefix of PHPStan tip message."
   :type 'string
   :safe #'stringp
-  :group 'phpstan)
+  :local t)
 
 (defcustom phpstan-identifier-prefix "🪪 "
   "Prefix of PHPStan error identifier."
   :type 'string
   :safe #'stringp
-  :group 'phpstan)
+  :local t)
 
 (defcustom phpstan-enable-remote-experimental nil
   "Enable PHPStan analysis remotely by TRAMP.
@@ -146,7 +144,7 @@ This feature is experimental and should be used with caution as it may
 have unexpected behaviors or performance implications."
   :type 'boolean
   :safe #'booleanp
-  :group 'phpstan)
+  :local t)
 
 (defconst phpstan-template-dump-type "\\PHPStan\\dumpType();")
 (defconst phpstan-template-dump-phpdoc-type "\\PHPStan\\dumpPhpDocType();")
@@ -154,13 +152,11 @@ have unexpected behaviors or performance implications."
 (defcustom phpstan-intert-dump-type-templates (cons phpstan-template-dump-type
                                              phpstan-template-dump-phpdoc-type)
   "Default template of PHPStan dumpType insertion."
-  :type '(cons string string)
-  :group 'phpstan)
+  :type '(cons string string))
 
 (defcustom phpstan-disable-buffer-errors nil
   "If non-NIL, don't keep errors per buffer to save memory."
-  :type 'boolean
-  :group 'phpstan)
+  :type 'boolean)
 
 (defcustom phpstan-not-ignorable-identifiers '("ignore.parseError")
   "Lists identifiers prohibited from being added to @phpstan-ignore tags."
@@ -168,10 +164,11 @@ have unexpected behaviors or performance implications."
 
 (defcustom phpstan-activate-editor-mode nil
   "Controls how PHPStan's editor mode is activated."
-  :local t
   :type '(choice (const :tag "Automatic (based on version)" nil)
-                 (const :tag "Editor mode will be actively enabled, regardless of the PHPStan version." 'enabled)
-                 (const :tag "Editor mode will be explicitly disabled." 'disabled)))
+                 (const :tag "Editor mode will be actively enabled, regardless of the PHPStan version." enabled)
+                 (const :tag "Editor mode will be explicitly disabled." disabled))
+  :safe (lambda (v) (memq v '(nil enabled disabled)))
+  :local t)
 
 (defvar-local phpstan--use-xdebug-option nil)
 
@@ -573,7 +570,7 @@ it returns the value of `SOURCE' as it is."
 
 If a cached result for EXECUTABLE exists, it is returned directly.
 Otherwise, this function attempts to determine support by retrieving
-the PHPStan version using 'phpstan --version' command."
+the PHPStan version using `phpstan --version' command."
   (pcase phpstan-activate-editor-mode
     ('enabled t)
     ('disabled nil)

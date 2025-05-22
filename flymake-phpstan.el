@@ -38,6 +38,7 @@
 (require 'cl-lib)
 (require 'php-project)
 (require 'flymake)
+(require 'flymake-proc)
 (require 'phpstan)
 (eval-when-compile
   (require 'pcase))
