@@ -521,13 +521,14 @@ it returns the value of `SOURCE' as it is."
             (phpstan-use-xdebug-option (list "--xdebug")))
            (when editor
              (let ((original-file (plist-get editor :original-file)))
-               (if (phpstan-editor-mode-available-p (car (phpstan-get-executable-and-args)))
-                   (list "--tmp-file" (funcall (plist-get editor :temp-file))
-                         "--instead-of" original-file
-                         "--" original-file)
-                 (if (funcall (plist-get editor :analyze-original) original-file)
-                     (list "--" original-file)
-                   (list "--" (funcall (plist-get editor :inplace)))))))
+               (cond
+                ((funcall (plist-get editor :analyze-original) original-file)
+                 (list "--" original-file))
+                ((phpstan-editor-mode-available-p (car (phpstan-get-executable-and-args)))
+                 (list "--tmp-file" (funcall (plist-get editor :temp-file))
+                       "--instead-of" original-file
+                       "--" original-file))
+                ((list "--" (funcall (plist-get editor :inplace)))))))
            options
            (and args (cons "--" args)))))
 
