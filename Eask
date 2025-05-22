@@ -1,7 +1,7 @@
 ;; -*- mode: eask; lexical-binding: t -*-
 
 (package "phpstan"
-         "0.8.2"
+         "0.9.0"
          "Interface to PHPStan (PHP static analyzer)")
 
 (website-url "https://github.com/emacs-php/phpstan.el")
