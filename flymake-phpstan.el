@@ -52,11 +52,6 @@
   :type 'boolean
   :group 'flymake-phpstan)
 
-(defcustom flycheck-phpstan-fallback-to-original-analysis-if-editor-mode-unavailable t
-  "If non-NIL, analyze the original file when PHPStan editor mode is unavailable."
-  :type 'boolean
-  :safe #'booleanp)
-
 (defvar-local flymake-phpstan--proc nil)
 
 (defun flymake-phpstan-make-process (root command-args report-fn source)
@@ -94,10 +89,8 @@
          (code (user-error "PHPStan error (exit status: %s)" code)))))))
 
 (defun flymake-phpstan-analyze-original (original)
-  "Return non-NIL if ORIGINAL is NIL, fallback is enabled, and buffer is modified."
-  (and (null original)
-       flymake-phpstan-fallback-to-original-analysis-if-editor-mode-unavailable
-       (buffer-modified-p)))
+  "Return non-NIL if ORIGINAL is non-NIL and buffer is not modified."
+  (and original (not (buffer-modified-p))))
 
 (defun flymake-phpstan--create-temp-file ()
   "Create temp file and return the path."

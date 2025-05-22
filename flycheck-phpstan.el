@@ -77,11 +77,6 @@ passed to `flycheck-finish-checker-process'."
                (string-match-p flycheck-phpstan--nofiles-message output))
     (funcall next checker exit-status files output callback cwd)))
 
-(defcustom flycheck-phpstan-fallback-to-original-analysis-if-editor-mode-unavailable t
-  "If non-NIL, analyze the original file when PHPStan editor mode is unavailable."
-  :type 'boolean
-  :safe #'booleanp)
-
 (defun flycheck-phpstan--enabled-and-set-variable ()
   "Return path to phpstan configure file, and set buffer execute in side effect."
   (let ((enabled (phpstan-enabled)))
@@ -145,10 +140,8 @@ passed to `flycheck-finish-checker-process'."
                                                           :filename file))))
 
 (defun flycheck-phpstan-analyze-original (original)
-  "Return non-NIL if ORIGINAL is NIL, fallback is enabled, and buffer is modified."
-  (and (null original)
-       flycheck-phpstan-fallback-to-original-analysis-if-editor-mode-unavailable
-       (buffer-modified-p)))
+  "Return non-NIL if ORIGINAL is non-NIL and buffer is not modified."
+  (and original (not (buffer-modified-p))))
 
 (flycheck-define-checker phpstan
   "PHP static analyzer based on PHPStan."
