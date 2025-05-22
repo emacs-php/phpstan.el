@@ -516,6 +516,7 @@ it returns the value of `SOURCE' as it is."
                            "--xdebug"))
              (list phpstan--use-xdebug-option))
             (phpstan-use-xdebug-option (list "--xdebug")))
+           options
            (when editor
              (let ((original-file (plist-get editor :original-file)))
                (cond
@@ -526,8 +527,7 @@ it returns the value of `SOURCE' as it is."
                        "--instead-of" original-file
                        "--" original-file))
                 ((list "--" (funcall (plist-get editor :inplace)))))))
-           options
-           (and args (cons "--" args)))))
+           (if editor args (cons "--" args)))))
 
 (defun phpstan-update-ignorebale-errors-from-json-buffer (errors)
   "Update `phpstan--ignorable-errors' variable by ERRORS."
