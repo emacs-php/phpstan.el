@@ -162,6 +162,13 @@ Use phpstan memory limit option when non-NIL.
      - ex) ~"1G"~
 - ~nil~ :: Use memory limit in php.ini
 
+*** Custom variable ~phpstan-activate-editor-mode~
+Determines whether PHPStan Editor Mode is available.
+
+- ~nil~ (default) :: Dynamically checks the PHPStan version by getting the path of the installed PHPStan executable.
+- ~'enabled~ :: Always use Editor Mode (this will cause an error in older versions of PHPStan)
+- ~'disabled~ :: Never use Editor Mode (no support for editors provided)
+
 *** Custom variable ~phpstan-docker-image~
 Docker image URL or Docker Hub image name or NIL.  Default as ~"ghcr.io/phpstan/phpstan"~.  See [[https://phpstan.org/user-guide/docker][Docker - PHPStan Documentation]]
  and [[https://github.com/orgs/phpstan/packages/container/package/phpstan][GitHub Container Registory - Package phpstan]].

@@ -2,11 +2,26 @@
 
 All notable changes of the `phpstan.el` are documented in this file using the [Keep a Changelog](https://keepachangelog.com/) principles.
 
-## Unreleased
+<!-- ## Unreleased -->
+
+## [0.9.0]
 
 ### Added
 
-* Add `phpstan-copy-dumped-type` command to copy the nearest dumped type from `PHPStan\dumpType()` or `PHPStan\dumpPhpDocType()` messages.
+* Add `phpstan-copy-dumped-type` command to copy the nearest dumped type from `PHPStan\dumpType()` or `PHPStan\dumpPhpDocType()` messages
+* Add support for PHPStan [Editor Mode](https://phpstan.org/user-guide/editor-mode)
+
+### Changed
+
+* Improved error handling when no JSON response is returned
+
+### Fixed
+
+* Fixed erroneous dependency from `flymake-phpstan` to Flycheck functions
+
+### Removed
+
+* Drop support for Emacs 25.3
 
 ## [0.8.2]
 
