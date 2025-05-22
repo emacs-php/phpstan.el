@@ -11,7 +11,7 @@ Emacs interface to [[https://github.com/phpstan/phpstan][PHPStan]], includes che
 
 #+BEGIN_QUOTE
 [!TIP]
-This package provides support for the [[https://phpstan.org/user-guide/editor-mode][Editor Mode]] that will be added in PHPStan 2.1.17 and 1.12.27.\\
+This package provides support for the [[https://phpstan.org/user-guide/editor-mode][Editor Mode]] introduced in PHPStan [[https://github.com/phpstan/phpstan/releases/tag/2.1.17][2.1.17]] and [[https://github.com/phpstan/phpstan/releases/tag/1.12.27][1.12.27]].\\
 *We strongly recommend that you always update to the latest PHPStan.*
 #+END_QUOTE
 
