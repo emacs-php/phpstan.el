@@ -1,4 +1,4 @@
-;;; phpstan.el --- Interface to PHPStan              -*- lexical-binding: t; -*-
+;;; phpstan.el --- Interface to PHPStan (PHP static analyzer)  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2025  Friends of Emacs-PHP development
 
@@ -62,6 +62,7 @@
   (require 'compat nil t)
   (require 'php)
   (require 'json)
+  (require 'tramp)
   (declare-function 'tramp-dissect-file-name "tramp" '(name &optional nodefault))
   (declare-function 'tramp-file-name-localname "tamp" '(cl-x)))
 
