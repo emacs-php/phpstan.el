@@ -16,7 +16,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 use PhpParser\Node;
 use PhpParser\Node\Expr\ArrowFunction;
 use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Closure;
+use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\PropertyFetch;
@@ -420,6 +422,54 @@ class PHPStanEmacsHoverTreeFetcherCollector implements Collector {
 		return $this->processNodeWithType($assigned, $type);
 	}
 
+	/** @return ?CollectedData */
+	private function processConstFetchNode(ConstFetch $node, Scope $scope): ?array {
+		$type = $scope->getType($node);
+		if ($type instanceof ErrorType) {
+			return null;
+		}
+		if ($node->name->getStartFilePos() === -1 || $node->name->getEndFilePos() === -1) {
+			return null;
+		}
+
+		return array_merge($this->describeTypes($type), [
+			'name' => $node->name->toString(),
+			'kind' => 'const',
+			'pos' => [
+				'start' => $node->name->getStartFilePos(),
+				'end' => $node->name->getEndFilePos() + 1,
+			],
+		]);
+	}
+
+	/** @return ?CollectedData */
+	private function processClassConstFetchNode(ClassConstFetch $node, Scope $scope): ?array {
+		if (!($node->name instanceof Identifier)) {
+			return null;
+		}
+
+		$type = $scope->getType($node);
+		if ($type instanceof ErrorType) {
+			return null;
+		}
+		if ($node->name->getStartFilePos() === -1 || $node->name->getEndFilePos() === -1) {
+			return null;
+		}
+
+		$className = ($node->class instanceof Name) ? $node->class->toString() : null;
+		$constName = $node->name->toString();
+		$displayName = $className ? ($className . '::' . $constName) : $constName;
+
+		return array_merge($this->describeTypes($type), [
+			'name' => $displayName,
+			'kind' => 'class-const',
+			'pos' => [
+				'start' => $node->name->getStartFilePos(),
+				'end' => $node->name->getEndFilePos() + 1,
+			],
+		]);
+	}
+
 	/** @return list<CollectedData> */
 	protected function onClosure($node, ParametersAcceptor $type): array {
 		/** @var array<string, Param> */
@@ -525,6 +575,20 @@ class PHPStanEmacsHoverTreeFetcherCollector implements Collector {
 			$assignNodeData = $this->processAssignNode($node, $scope);
 			if ($assignNodeData) {
 				$data[] = $assignNodeData;
+			}
+		}
+
+		if ($node instanceof ConstFetch) {
+			$constNodeData = $this->processConstFetchNode($node, $scope);
+			if ($constNodeData) {
+				$data[] = $constNodeData;
+			}
+		}
+
+		if ($node instanceof ClassConstFetch) {
+			$classConstNodeData = $this->processClassConstFetchNode($node, $scope);
+			if ($classConstNodeData) {
+				$data[] = $classConstNodeData;
 			}
 		}
 
