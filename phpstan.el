@@ -486,6 +486,10 @@ it returns the value of `SOURCE' as it is."
        ((executable-find "phpstan") (list (executable-find "phpstan")))
        (t (error "PHPStan executable not found")))))))
 
+(defun phpstan-buffer-not-modified-p (original)
+  "Return non-NIL if ORIGINAL is non-NIL and buffer is not modified."
+  (and original (not (buffer-modified-p))))
+
 (cl-defun phpstan-get-command-args (&key include-executable use-pro args format options config verbose editor)
   "Return command line argument for PHPStan."
   (let ((executable-and-args (phpstan-get-executable-and-args))
