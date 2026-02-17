@@ -178,6 +178,8 @@ have unexpected behaviors or performance implications."
 
 (defvar phpstan-executable-versions-alist '())
 
+(declare-function phpstan-hover-type-at-point "phpstan-hover" (&optional prefer-phpdoc))
+
 ;;;###autoload
 (progn
   (defvar-local phpstan-working-dir nil
@@ -655,17 +657,27 @@ POSITION determines where to insert the comment and can be either `this-line' or
                         (string-join identifiers ", ")))))))
 
 ;;;###autoload
-(defun phpstan-copy-dumped-type ()
-  "Copy a dumped PHPStan type."
-  (interactive)
-  (if phpstan--dumped-types
-      (let ((type (if (eq 1 (length phpstan--dumped-types))
-                      (cdar phpstan--dumped-types)
-                    (let ((linum (line-number-at-pos)))
-                      (cdar (seq-sort-by (lambda (elm) (abs (- linum (car elm)))) #'< phpstan--dumped-types))))))
-        (kill-new type)
-        (message "Copied %s" type))
-    (user-error "No dumped PHPStan types")))
+(defun phpstan-copy-dumped-type (&optional raw-prefix)
+  "Copy a dumped PHPStan type.
+
+When called without RAW-PREFIX, prefer PHPDoc type from phpstan-hover.
+When called with RAW-PREFIX (for example, `C-u`), copy non-PHPDoc type."
+  (interactive "P")
+  (let ((prefer-phpdoc (or (null raw-prefix) (equal raw-prefix 0))))
+    (if-let* ((hover-type
+               (and (bound-and-true-p phpstan-hover-mode)
+                    (phpstan-hover-type-at-point prefer-phpdoc))))
+      (progn
+        (kill-new hover-type)
+        (message "Copied %s" hover-type))
+      (if phpstan--dumped-types
+          (let ((type (if (eq 1 (length phpstan--dumped-types))
+                          (cdar phpstan--dumped-types)
+                        (let ((linum (line-number-at-pos)))
+                          (cdar (seq-sort-by (lambda (elm) (abs (- linum (car elm)))) #'< phpstan--dumped-types))))))
+            (kill-new type)
+            (message "Copied %s" type))
+        (user-error "No dumped PHPStan types")))))
 
 ;;;###autoload
 (defun phpstan-insert-dumptype (&optional expression prefix-num)
