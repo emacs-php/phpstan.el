@@ -35,6 +35,7 @@ use PHPStan\Analyser\Scope;
 use PHPStan\Collectors\Collector;
 use PHPStan\Node\CollectedDataNode;
 use PHPStan\Node\InForeachNode;
+use PHPStan\PhpDocParser\Printer\Printer;
 use PHPStan\Reflection\ParametersAcceptor;
 use PHPStan\Reflection\Php\PhpMethodFromParserNodeReflection;
 use PHPStan\Rules\Rule;
@@ -73,6 +74,7 @@ class PHPStanEmacsHoverTreeFetcher implements Rule {
 	/**
 	 * @param array<string, list<list<array{
 	 *   typeDescr: string,
+	 *   phpDocType?: string,
 	 *   name: string,
 	 *   kind?: string,
 	 *   pos: array{
@@ -82,6 +84,7 @@ class PHPStanEmacsHoverTreeFetcher implements Rule {
 	 * }>>> $fileDatas
 	 * @return array<string, list<array{
 	 *  typeDescr: string,
+	 *  phpDocType?: string,
 	 *  name: string,
 	 *  kind?: string,
 	 *  pos: array{
@@ -122,7 +125,7 @@ class PHPStanEmacsHoverTreeFetcher implements Rule {
 			foreach ($fileData as $nodeData) {
 				foreach ($nodeData as $datum) {
 					$endPos = $findPos($datum['pos']['end']);
-					$results[$filePath][] = [
+					$entry = [
 						'typeDescr' => $datum['typeDescr'],
 						'name' => $datum['name'],
 						'kind' => $datum['kind'] ?? null,
@@ -134,6 +137,10 @@ class PHPStanEmacsHoverTreeFetcher implements Rule {
 							],
 						],
 					];
+					if (isset($datum['phpDocType']) && is_string($datum['phpDocType'])) {
+						$entry['phpDocType'] = $datum['phpDocType'];
+					}
+					$results[$filePath][] = $entry;
 				}
 			}
 		}
@@ -158,6 +165,35 @@ class PHPStanEmacsHoverTreeFetcher implements Rule {
  * @implements Collector<Node, list<CollectedData>>
  */
 class PHPStanEmacsHoverTreeFetcherCollector implements Collector {
+	/** @var ?Printer */
+	private $phpDocPrinter = null;
+
+	/** @return array{typeDescr: string, phpDocType?: string} */
+	private function describeTypes(Type $type): array {
+		$typeDescr = $type->describe(VerbosityLevel::precise());
+		$result = ['typeDescr' => $typeDescr];
+
+		$phpDocType = null;
+		try {
+			$phpDocType = $this->getPhpDocPrinter()->print($type->toPhpDocNode());
+		} catch (Throwable $e) {
+			$phpDocType = null;
+		}
+
+		if ($phpDocType !== null && $phpDocType !== '' && $phpDocType !== $typeDescr) {
+			$result['phpDocType'] = $phpDocType;
+		}
+
+		return $result;
+	}
+
+	private function getPhpDocPrinter(): Printer {
+		if ($this->phpDocPrinter === null) {
+			$this->phpDocPrinter = new Printer();
+		}
+		return $this->phpDocPrinter;
+	}
+
 	/** @var list<array{ClosureType, list<array{startPos: int, endPos: int, isUsed: false, closureNode: Closure|ArrowFunction}>}> */
 	private $closureTypeToNode = [];
 
@@ -271,7 +307,6 @@ class PHPStanEmacsHoverTreeFetcherCollector implements Collector {
 	/** @return ?CollectedData */
 	private function processNodeWithType($node, Type $type): ?array {
 		$varName = $node instanceof Variable ? $node->name : $node->name->name;
-		$typeDescr = $type->describe(VerbosityLevel::precise());
 		if (!is_string($varName)) {
 			return null;
 		}
@@ -280,15 +315,14 @@ class PHPStanEmacsHoverTreeFetcherCollector implements Collector {
 			return null;
 		}
 
-		return [
-			'typeDescr' => $typeDescr,
+		return array_merge($this->describeTypes($type), [
 			'name' => $varName,
 			'kind' => 'variable',
 			'pos' => [
 				'start' => $node->getStartFilePos() - ($node instanceof Variable ? 1 : 0),
 				'end' => $node->getEndFilePos() + 1,
 			],
-		];
+		]);
 	}
 
 	/** @return ?CollectedData */
@@ -316,15 +350,14 @@ class PHPStanEmacsHoverTreeFetcherCollector implements Collector {
 			$end = min($end, $node->getEndFilePos() + 1);
 		}
 
-		return [
-			'typeDescr' => $type->describe(VerbosityLevel::precise()),
+		return array_merge($this->describeTypes($type), [
 			'name' => 'return',
 			'kind' => 'return',
 			'pos' => [
 				'start' => $start,
 				'end' => $end,
 			],
-		];
+		]);
 	}
 
 	/** @return ?CollectedData */
@@ -349,15 +382,14 @@ class PHPStanEmacsHoverTreeFetcherCollector implements Collector {
 			$end = min($end, $node->getEndFilePos() + 1);
 		}
 
-		return [
-			'typeDescr' => $type->describe(VerbosityLevel::precise()),
+		return array_merge($this->describeTypes($type), [
 			'name' => 'yield',
 			'kind' => 'yield',
 			'pos' => [
 				'start' => $start,
 				'end' => $end,
 			],
-		];
+		]);
 	}
 
 	/** @return ?CollectedData */
@@ -376,15 +408,14 @@ class PHPStanEmacsHoverTreeFetcherCollector implements Collector {
 			$end = min($end, $node->getEndFilePos() + 1);
 		}
 
-		return [
-			'typeDescr' => $type->describe(VerbosityLevel::precise()),
+		return array_merge($this->describeTypes($type), [
 			'name' => 'yield from',
 			'kind' => 'yield-from',
 			'pos' => [
 				'start' => $start,
 				'end' => $end,
 			],
-		];
+		]);
 	}
 
 	/** @return ?CollectedData */
@@ -396,15 +427,14 @@ class PHPStanEmacsHoverTreeFetcherCollector implements Collector {
 			return null;
 		}
 
-		return [
-			'typeDescr' => $type->describe(VerbosityLevel::precise()),
+		return array_merge($this->describeTypes($type), [
 			'name' => $name,
 			'kind' => 'call',
 			'pos' => [
 				'start' => $nameNode->getStartFilePos(),
 				'end' => $nameNode->getEndFilePos() + 1,
 			],
-		];
+		]);
 	}
 
 	/** @return ?CollectedData */
@@ -486,19 +516,18 @@ class PHPStanEmacsHoverTreeFetcherCollector implements Collector {
 				continue;
 			}
 
-			$typeDescr = $parameter->getType()->describe(VerbosityLevel::precise());
+			$typeData = $this->describeTypes($parameter->getType());
 			if ($paramNode->getStartFilePos() === -1 || $paramNode->getEndFilePos() === -1) {
 				continue;
 			}
 
-			$data[] = [
-				'typeDescr' => $typeDescr,
+			$data[] = array_merge($typeData, [
 				'name' => $parameter->getName(),
 				'pos' => [
 					'start' => $paramNode->getStartFilePos(),
 					'end' => $paramNode->getEndFilePos() + 1,
 				],
-			];
+			]);
 		}
 
 		return $data;
@@ -522,19 +551,18 @@ class PHPStanEmacsHoverTreeFetcherCollector implements Collector {
 					continue;
 				}
 
-				$typeDescr = $parameter->getType()->describe(VerbosityLevel::precise());
+				$typeData = $this->describeTypes($parameter->getType());
 				if ($paramNode->getStartFilePos() === -1 || $paramNode->getEndFilePos() === -1) {
 					continue;
 				}
 
-				$data[] = [
-					'typeDescr' => $typeDescr,
+				$data[] = array_merge($typeData, [
 					'name' => $parameter->getName(),
 					'pos' => [
 						'start' => $paramNode->getStartFilePos(),
 						'end' => $paramNode->getEndFilePos() + 1,
 					],
-				];
+				]);
 			}
 		}
 
