@@ -2,7 +2,25 @@
 
 All notable changes of the `phpstan.el` are documented in this file using the [Keep a Changelog](https://keepachangelog.com/) principles.
 
-<!-- ## Unreleased -->
+## Unreleased
+
+### Added
+
+* **[experimental]** Add new `phpstan-hover.el`.
+  * Add `phpstan-hover-mode` minor mode to show PHPStan type info at point without publishing diagnostics to Flycheck/Flymake.
+    * Hover support for variables, assignments, function/method/static calls, constants, class constants, `return`, `yield`, and `yield from`.
+    * PHPDoc type collection in hover data and display integration when available.
+  * Add `phpstan-hover-show-kind-label` custom variable to toggle verbose labels like `return:` / `yield:` in hover text.
+  * Add `phpstan-hover-message-prefix` custom variable preset choices, including emoji labels.
+* `phpstan-copy-dumped-type` now prefers PHPDoc type from hover data by default, and can copy non-PHPDoc type with a prefix argument (<kbd>C-u</kbd>).
+
+### Changed
+
+* `phpstan-copy-dumped-type` command now prioritizes `phpstan-hover-mode` data at point before falling back to dumped-type messages.
+
+### Fixed
+
+* Fix `phpstan-get-command-args` to keep `:options` in the correct position and pass target arguments correctly when editor mode options are used.
 
 ## [0.9.0]
 
