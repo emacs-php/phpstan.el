@@ -35,6 +35,29 @@ This package provides support for the [[https://phpstan.org/user-guide/editor-mo
 (add-hook 'php-mode-hook #'flymake-phpstan-turn-on)
 #+END_SRC
 
+*** Hover type display without diagnostics (experimental)
+If you want type-on-hover without adding diagnostics to Flycheck/Flymake, enable ~phpstan-hover-mode~.
+
+#+BEGIN_SRC emacs-lisp
+(defun my-php-hover-setup ()
+  (require 'phpstan-hover)
+  (phpstan-hover-mode 1))
+
+(add-hook 'php-mode-hook #'my-php-hover-setup)
+#+END_SRC
+
+By default, it tries ~posframe-show~ (GUI), then ~popup-tip~, and falls back to ~message~.
+
+You can customize hover behavior, for example:
+
+#+BEGIN_SRC emacs-lisp
+(with-eval-after-load 'phpstan-hover
+  (setopt phpstan-hover-idle-delay 0.5) ;; Show popups more quickly than the default.
+  (setopt phpstan-hover-display-backend 'auto) ;; Auto-select from available popup backends.
+  (setopt phpstan-hover-message-prefix "🔖 ") ;; Use a shorter emoji prefix instead of "PHPStan: ".
+  (setopt phpstan-hover-show-kind-label t)) ;; Set nil to hide syntax labels in popup messages.
+#+END_SRC
+
 *** Using Docker (phpstan/docker-image)
 Install [[https://www.docker.com/get-started][Docker]] and [[https://github.com/phpstan/phpstan/pkgs/container/phpstan][phpstan/phpstan image]].
 
@@ -113,13 +136,34 @@ By default it inserts the tag on the previous line, but if there is already a ta
 
 If there is no existing tag and ~C-u~ is pressed before the command, it will be inserted at the end of the line.
 *** Command ~phpstan-copy-dumped-type~
-Copy the nearest dumped type message from PHPStan's output.
+Copy a PHPStan type to the kill ring.
+
+When ~phpstan-hover-mode~ is enabled and hover data is available at point, this command prioritizes that type.
+
+- default :: Prefer PHPDoc type if available.
+- with ~C-u~ :: Prefer non-PHPDoc type.
+
+If hover data is not available, it falls back to dumped messages from ~PHPStan\dumpType()~ / ~PHPStan\dumpPhpDocType()~ output.
 
 This command looks for messages like ~Dumped type: int|string|null~ reported by ~PHPStan\dumpType()~ or ~PHPStan\dumpPhpDocType()~, and copies the type string to the kill ring.
 
 If there are multiple dumped types in the buffer, it selects the one closest to the current line.
 
 If no dumped type messages are found, the command signals an error.
+*** Minor mode ~phpstan-hover-mode~
+This feature is made possible by [[https://github.com/SanderRonde/phpstan-vscode][SanderRonde/phpstan-vscode]], and is extended in this package with additional hover integrations and behavior tuning.
+
+Enable this mode to show PHPStan type information at point without publishing diagnostics to Flycheck/Flymake.
+
+Behavior summary:
+- Runs PHPStan on idle and caches hover type data per buffer/project.
+- Uses Editor Mode for modified buffers when available.
+- Displays with ~posframe~ / ~popup~ / ~message~ depending on
+  ~phpstan-hover-display-backend~.
+- Hides popup on cursor move, window change, or buffer state change.
+
+This mode is independent of checker backends, so it can be used with Flycheck, Flymake, or without either.
+
 ** API
 Most variables defined in this package are buffer local.  If you want to set it for multiple projects, use [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Default-Value.html][setq-default]].
 
@@ -172,3 +216,64 @@ Determines whether PHPStan Editor Mode is available.
 *** Custom variable ~phpstan-docker-image~
 Docker image URL or Docker Hub image name or NIL.  Default as ~"ghcr.io/phpstan/phpstan"~.  See [[https://phpstan.org/user-guide/docker][Docker - PHPStan Documentation]]
  and [[https://github.com/orgs/phpstan/packages/container/package/phpstan][GitHub Container Registory - Package phpstan]].
+
+*** Custom variable ~phpstan-hover-idle-delay~
+Seconds to wait after idle before requesting hover data.
+
+*** Custom variable ~phpstan-hover-display-backend~
+Display backend for hover text.
+
+- ~'auto~ :: Try ~posframe-show~ (GUI), then ~popup-tip~, then ~message~.
+- ~'posframe~ :: Use [[https://github.com/tumashu/posframe][posframe]] directly.
+- ~'popup~ :: Use [[https://github.com/auto-complete/popup-el][popup.el]] directly.
+- ~'message~ :: Use minibuffer message.
+
+*** Custom variable ~phpstan-hover-message-prefix~
+Prefix string shown before hover text.
+
+Built-in choices include:
+- ~"PHPStan: "~ (default)
+- ~"🔖 "~
+
+*** Custom variable ~phpstan-hover-show-kind-label~
+Toggle verbose labels like ~return:~, ~yield:~, ~foo():~, and ~$var:~ in hover text.
+
+When nil, hover text shows only the type body.
+
+*** Custom variable ~phpstan-hover-debug~
+When non-nil, re-raise internal hover errors to show full backtraces.
+** Copyright
+This package is released under [[https://www.gnu.org/licenses/gpl-3.0.html][GPLv3]]. See [[LICENSE][~LICENSE~]] file.
+
+#+BEGIN_SRC
+Copyright (C) 2026  Friends of Emacs-PHP development
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#+END_SRC
+*** ~phpstan-hover-tree-fetcher.php~
+[[php/phpstan-hover-tree-fetcher.php][~phpstan-hover-tree-fetcher.php~]] is derived from [[https://github.com/SanderRonde/phpstan-vscode][SanderRonde/phpstan-vscode]]'s [[https://github.com/SanderRonde/phpstan-vscode/blob/v4.0.12/php/TreeFetcher.php][~TreeFetcher.php~]].
+
+We are deeply grateful to Sander Ronde for publishing and maintaining the original implementation.
+
+This file is not relicensed under GPL by this project.  The original MIT License continues to apply to ~php/phpstan-hover-tree-fetcher.php~, and we do not claim additional copyright over the upstream-derived portions.
+
+#+BEGIN_SRC
+Copyright 2022 Sander Ronde (awsdfgvhbjn@gmail.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#+END_SRC
