@@ -429,11 +429,18 @@ it returns the value of `SOURCE' as it is."
       (when (search-forward-regexp "^{" nil t)
         (backward-char 1)
         (delete-region (point-min) (point))))
+    ;; Map JSON false and null to nil.  PHPStan's `ignorable' is a boolean read
+    ;; in a truthy context, and by default both parsers return a truthy symbol
+    ;; for false (`:false' / `:json-false'); `json-parse-buffer' also returns a
+    ;; truthy `:null'.  Without this, a non-ignorable message looks ignorable,
+    ;; and the two parsers disagree on null.
     (if (eval-when-compile (and (fboundp 'json-serialize)
                                 (fboundp 'json-parse-buffer)))
         (with-no-warnings
-          (json-parse-buffer :object-type 'plist :array-type 'list))
-      (let ((json-object-type 'plist) (json-array-type 'list))
+          (json-parse-buffer :object-type 'plist :array-type 'list
+                             :false-object nil :null-object nil))
+      (let ((json-object-type 'plist) (json-array-type 'list)
+            (json-false nil) (json-null nil))
         (json-read-object)))))
 
 (defun phpstan--expand-file-name (name)

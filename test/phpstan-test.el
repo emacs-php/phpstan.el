@@ -35,6 +35,33 @@
                  (phpstan--plist-to-alist '(:a 1 :b 2))))
   (should (equal nil (phpstan--plist-to-alist nil))))
 
+;;; JSON parsing
+
+(ert-deftest phpstan-test-parse-json-false-is-nil ()
+  "JSON false and null read as nil, not a truthy symbol.
+`ignorable' is read in a truthy context, so `false' must be nil."
+  (with-temp-buffer
+    (insert "{\"a\":false,\"b\":null,\"c\":true}")
+    (let ((data (phpstan--parse-json (current-buffer))))
+      (should-not (plist-get data :a))
+      (should-not (plist-get data :b))
+      (should (eq t (plist-get data :c))))))
+
+(ert-deftest phpstan-test-update-ignorable-skips-non-ignorable ()
+  "Only ignorable messages feed `phpstan--ignorable-errors'.
+A non-ignorable message (\"ignorable\":false) must not be offered to
+`phpstan-insert-ignore'."
+  (with-temp-buffer
+    (insert (concat "{\"files\":{\"/x\":{\"messages\":["
+                    "{\"message\":\"parse error\",\"line\":1,\"ignorable\":false,"
+                    "\"identifier\":\"ignore.parseError\"},"
+                    "{\"message\":\"undefined\",\"line\":2,\"ignorable\":true,"
+                    "\"identifier\":\"variable.undefined\"}]}}}"))
+    (let ((errors (phpstan--plist-to-alist
+                   (plist-get (phpstan--parse-json (current-buffer)) :files))))
+      (phpstan-update-ignorebale-errors-from-json-buffer errors)
+      (should (equal '((2 "variable.undefined")) phpstan--ignorable-errors)))))
+
 ;;; Container runtime detection
 
 (ert-deftest phpstan-test-container-runtime-command ()

@@ -77,6 +77,19 @@ This is what lets `phpstan-insert-ignore' work from Flymake."
       (should (equal '((4 "function.notFound") (7 "constant.notFound"))
                      phpstan--ignorable-errors)))))
 
+(ert-deftest flymake-phpstan-test-parse-skips-non-ignorable ()
+  "A non-ignorable message (\"ignorable\":false) is not offered to ignore."
+  (with-temp-buffer
+    (let ((source (current-buffer))
+          (phpstan-disable-buffer-errors nil)
+          (json (concat "{\"files\":{\"/x\":{\"messages\":["
+                        "{\"message\":\"parse error\",\"line\":1,\"ignorable\":false,"
+                        "\"identifier\":\"ignore.parseError\"},"
+                        "{\"message\":\"undefined\",\"line\":2,\"ignorable\":true,"
+                        "\"identifier\":\"variable.undefined\"}]}}}")))
+      (flymake-phpstan--parse json source)
+      (should (equal '((2 "variable.undefined")) phpstan--ignorable-errors)))))
+
 (ert-deftest flymake-phpstan-test-parse-json-with-stderr-prefix ()
   "The report is found even when a container prefixes it with progress."
   (with-temp-buffer
