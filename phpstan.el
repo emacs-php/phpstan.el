@@ -63,8 +63,8 @@
   (require 'php)
   (require 'json)
   (require 'tramp)
-  (declare-function 'tramp-dissect-file-name "tramp" '(name &optional nodefault))
-  (declare-function 'tramp-file-name-localname "tamp" '(cl-x)))
+  (declare-function tramp-dissect-file-name "tramp" (name &optional nodefault))
+  (declare-function tramp-file-name-localname "tramp" (cl-x)))
 
 ;; Variables:
 (defgroup phpstan nil
