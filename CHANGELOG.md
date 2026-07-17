@@ -37,6 +37,7 @@ All notable changes of the `phpstan.el` are documented in this file using the [K
 * Fix editor mode detection asking the wrong program for its version.  Only the first element of the command line was probed, which is the container runtime for `(phpstan-executable . docker)` / `container` and `php` for a PHAR without the executable bit — so `docker --version` and `php --version` were parsed as PHPStan versions (`d1c06ef`, `Technologies`) and editor mode was silently disabled for every setup except a directly executable `phpstan`.
 * `phpstan-version` and `phpstan-editor-mode-available-p` now take the whole command line, as returned by `phpstan-get-executable-and-args`.  A bare string is still accepted.  `phpstan-version` no longer merges STDERR into the version string, which a container runtime pollutes with its progress report.
 * Fix `declare-function` forms for `tramp` that quoted the function name and argument list (and misspelled `tramp` as `tamp`), so the byte compiler warned that `tramp-dissect-file-name` might not be defined at runtime.
+* Fix a container run erroring when the project has no configuration file.  `phpstan-normalize-path` was handed the nil from `phpstan-get-config-file` and passed it to `replace-regexp-in-string`; it now returns nil for a nil path, so the command line simply omits `-c`.
 
 ### Removed
 
