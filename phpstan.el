@@ -77,8 +77,15 @@
   :link '(url-link :tag "phpstan.el" "https://github.com/emacs-php/phpstan.el"))
 
 (defcustom phpstan-flycheck-auto-set-executable t
-  "Set flycheck phpstan-executable automatically."
+  "Set flycheck phpstan-executable automatically.
+
+This variable no longer has any effect.  `flycheck-phpstan' now builds the
+whole command line from `phpstan-executable', so it never has to inject an
+executable into flycheck's own `flycheck-phpstan-executable' variable."
   :type 'boolean)
+(make-obsolete-variable 'phpstan-flycheck-auto-set-executable
+                        "the executable is always derived from `phpstan-executable'."
+                        "0.10.0")
 
 (defcustom phpstan-enable-on-no-config-file t
   "If T, activate config from composer even when `phpstan.neon' is not found."
@@ -94,7 +101,10 @@
   :local t)
 
 (defcustom phpstan-docker-image "ghcr.io/phpstan/phpstan"
-  "Docker image URL or Docker Hub image name or NIL."
+  "Docker image URL or Docker Hub image name or NIL.
+
+This image is also used when `phpstan-executable' is `container',
+because Apple container runs the same OCI images as Docker."
   :type '(choice
           (string :tag "URL or image name of Docker Hub.")
           (const :tag "Official Docker container" "ghcr.io/phpstan/phpstan")
@@ -265,6 +275,15 @@ NIL
        (lambda (v) (or (null v) (stringp v)))))
 
 (defconst phpstan-docker-executable "docker")
+(defconst phpstan-container-executable "container")
+
+(defconst phpstan-container-executables
+  (list (cons 'docker phpstan-docker-executable)
+        (cons 'container phpstan-container-executable))
+  "Alist of `phpstan-executable' symbols and their container runtime commands.
+
+Both runtimes take the same `run --rm -v HOST:/app IMAGE' command line and
+run the same OCI image, so they only differ in the command name.")
 
 ;;;###autoload
 (progn
@@ -276,6 +295,9 @@ STRING
 
 `docker'
      Use Docker using phpstan/docker-image.
+
+`container'
+     Use Apple container (macOS) using phpstan/docker-image.
 
 `(root . STRING)'
      Relative path to `phpstan' executable file.
@@ -289,9 +311,31 @@ NIL
        #'(lambda (v) (if (consp v)
                          (or (and (eq 'root (car v)) (stringp (cdr v)))
                              (and (stringp (car v)) (listp (cdr v))))
-                       (or (eq 'docker v) (null v) (stringp v))))))
+                       (or (memq v '(docker container)) (null v) (stringp v))))))
 
 ;; Utilities:
+(defun phpstan--container-runtime-command ()
+  "Return the container runtime command to build a `run' command line, or NIL.
+
+Only the symbol forms of `phpstan-executable' (`docker' and `container') ask
+phpstan.el to build the command line.  The `(STRING . (ARGUMENTS ...))' form
+supplies a complete command line of its own and must not be rewritten here."
+  (and (symbolp phpstan-executable)
+       (alist-get phpstan-executable phpstan-container-executables)))
+
+(defun phpstan--container-executable-p ()
+  "Return non-NIL if PHPStan is executed inside a container.
+
+Unlike `phpstan--container-runtime-command', this also recognizes the
+`(STRING . (ARGUMENTS ...))' form whose car names a known runtime, because
+such a command line still needs project paths rewritten to its mount point."
+  (or (phpstan--container-runtime-command)
+      (and (consp phpstan-executable)
+           (stringp (car phpstan-executable))
+           (member (car phpstan-executable)
+                   (mapcar #'cdr phpstan-container-executables))
+           t)))
+
 (defun phpstan--plist-to-alist (plist)
   "Convert PLIST to association list."
   (let (alist)
@@ -347,16 +391,12 @@ NIL
 (defun phpstan-normalize-path (source-original &optional source)
   "Return normalized source file path to pass by SOURCE-ORIGINAL or SOURCE.
 
-If neither `phpstan-replace-path-prefix' nor executable docker is set,
+If neither `phpstan-replace-path-prefix' nor a container executable is set,
 it returns the value of `SOURCE' as it is."
   (let ((root-directory (expand-file-name (php-project-get-root-dir)))
         (prefix
          (or phpstan-replace-path-prefix
-             (cond
-              ((eq 'docker phpstan-executable) "/app")
-              ((and (consp phpstan-executable)
-                    (string= "docker" (car phpstan-executable)))
-               "/app")))))
+             (and (phpstan--container-executable-p) "/app"))))
     (if prefix
         (expand-file-name
          (replace-regexp-in-string (concat "\\`" (regexp-quote root-directory))
@@ -453,8 +493,8 @@ it returns the value of `SOURCE' as it is."
 (defun phpstan-get-executable-and-args ()
   "Return PHPStan excutable file and arguments."
   (cond
-   ((eq 'docker phpstan-executable)
-    (list phpstan-docker-executable "run" "--rm" "-v"
+   ((phpstan--container-runtime-command)
+    (list (phpstan--container-runtime-command) "run" "--rm" "-v"
           (concat (expand-file-name (php-project-get-root-dir)) ":/app")
           phpstan-docker-image))
    ((and (consp phpstan-executable)
@@ -471,11 +511,10 @@ it returns the value of `SOURCE' as it is."
     (if (file-executable-p phpstan-executable)
         (list phpstan-executable)
       (list php-executable phpstan-executable)))
-   ((and phpstan-flycheck-auto-set-executable
-         (listp phpstan-executable)
+   ((and (consp phpstan-executable)
          (stringp (car phpstan-executable))
          (listp (cdr phpstan-executable)))
-    (cdr phpstan-executable))
+    phpstan-executable)
    ((null phpstan-executable)
     (let* ((vendor-phpstan (expand-file-name "vendor/bin/phpstan"
                                              (php-project-get-root-dir)))
@@ -499,42 +538,46 @@ it returns the value of `SOURCE' as it is."
         (autoload (phpstan-get-autoload-file))
         (memory-limit (phpstan-get-memory-limit))
         (level (phpstan-get-level)))
-    (nconc (if include-executable (list (car executable-and-args)) nil)
-           (cdr executable-and-args)
-           (list "analyze"
-                 (format "--error-format=%s" (or format "raw"))
-                 "--no-progress" "--no-interaction")
-           (and use-pro (list "--pro" "--no-ansi"))
-           (and config (list "-c" (phpstan--expand-file-name config)))
-           (and autoload (list "-a" autoload))
-           (and memory-limit (list "--memory-limit" memory-limit))
-           (and level (list "-l" level))
-           (cond
-            ((null verbose) nil)
-            ((memq verbose '(1 t)) (list "-v"))
-            ((eq verbose 2) (list "-vv"))
-            ((eq verbose 3) (list "-vvv"))
-            ((error ":verbose option should be 1, 2, 3 or `t'")))
-           (cond
-            (phpstan--use-xdebug-option (list phpstan--use-xdebug-option))
-            ((eq phpstan-use-xdebug-option 'auto)
-             (setq-local phpstan--use-xdebug-option
-                         (when (string= "1" (php-runtime-expr "extension_loaded('xdebug')"))
-                           "--xdebug"))
-             (list phpstan--use-xdebug-option))
-            (phpstan-use-xdebug-option (list "--xdebug")))
-           options
-           (when editor
-             (let ((original-file (plist-get editor :original-file)))
-               (cond
-                ((funcall (plist-get editor :analyze-original) original-file)
-                 (list "--" original-file))
-                ((phpstan-editor-mode-available-p (car (phpstan-get-executable-and-args)))
-                 (list "--tmp-file" (funcall (plist-get editor :temp-file))
-                       "--instead-of" original-file
-                       "--" original-file))
-                ((list "--" (funcall (plist-get editor :inplace)))))))
-           (if editor args (cons "--" args)))))
+    ;; NOTE: Use `append', never `nconc'.  Both `executable-and-args' and
+    ;; `options' may be shared structure owned by the caller (typically the
+    ;; value of `phpstan-executable' or `phpstan-generate-baseline-options'),
+    ;; and `nconc' would destructively grow them on every call.
+    (append (if include-executable (list (car executable-and-args)) nil)
+            (cdr executable-and-args)
+            (list "analyze"
+                  (format "--error-format=%s" (or format "raw"))
+                  "--no-progress" "--no-interaction")
+            (and use-pro (list "--pro" "--no-ansi"))
+            (and config (list "-c" (phpstan--expand-file-name config)))
+            (and autoload (list "-a" autoload))
+            (and memory-limit (list "--memory-limit" memory-limit))
+            (and level (list "-l" level))
+            (cond
+             ((null verbose) nil)
+             ((memq verbose '(1 t)) (list "-v"))
+             ((eq verbose 2) (list "-vv"))
+             ((eq verbose 3) (list "-vvv"))
+             ((error ":verbose option should be 1, 2, 3 or `t'")))
+            (cond
+             (phpstan--use-xdebug-option (list phpstan--use-xdebug-option))
+             ((eq phpstan-use-xdebug-option 'auto)
+              (setq-local phpstan--use-xdebug-option
+                          (when (string= "1" (php-runtime-expr "extension_loaded('xdebug')"))
+                            "--xdebug"))
+              (list phpstan--use-xdebug-option))
+             (phpstan-use-xdebug-option (list "--xdebug")))
+            options
+            (when editor
+              (let ((original-file (plist-get editor :original-file)))
+                (cond
+                 ((funcall (plist-get editor :analyze-original) original-file)
+                  (list "--" original-file))
+                 ((phpstan-editor-mode-available-p (car (phpstan-get-executable-and-args)))
+                  (list "--tmp-file" (funcall (plist-get editor :temp-file))
+                        "--instead-of" original-file
+                        "--" original-file))
+                 ((list "--" (funcall (plist-get editor :inplace)))))))
+            (if editor args (cons "--" args)))))
 
 (defun phpstan-update-ignorebale-errors-from-json-buffer (errors)
   "Update `phpstan--ignorable-errors' variable by ERRORS."

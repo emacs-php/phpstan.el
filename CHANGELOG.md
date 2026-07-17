@@ -13,14 +13,23 @@ All notable changes of the `phpstan.el` are documented in this file using the [K
   * Add `phpstan-hover-show-kind-label` custom variable to toggle verbose labels like `return:` / `yield:` in hover text.
   * Add `phpstan-hover-message-prefix` custom variable preset choices, including emoji labels.
 * `phpstan-copy-dumped-type` now prefers PHPDoc type from hover data by default, and can copy non-PHPDoc type with a prefix argument (<kbd>C-u</kbd>).
+* Add `container` to `phpstan-executable` to run PHPStan with [Apple container](https://github.com/apple/container) on macOS.  It uses the same `phpstan-docker-image` as `docker`.
 
 ### Changed
 
 * `phpstan-copy-dumped-type` command now prioritizes `phpstan-hover-mode` data at point before falling back to dumped-type messages.
+* `flycheck-phpstan` is now a Flycheck *generic* checker instead of a command checker.
+  * The whole command line is built from `phpstan-executable`, so the checker no longer injects an executable into flycheck's `flycheck-phpstan-executable` variable as a side effect of its `:enabled` predicate, and no longer advises `flycheck-finish-checker-process`.
+  * `php` is no longer required in `exec-path` to enable the checker.  Previously the dummy `"php"` in `:command` was resolved by Flycheck *before* the `:enabled` predicate ran, so a Docker-only setup could not enable the checker at all.
+  * `M-x flycheck-verify-setup` now reports the real PHPStan command and configuration file instead of `"php"`.
+* `phpstan-flycheck-auto-set-executable` is obsolete and ignored.
 
 ### Fixed
 
 * Fix `phpstan-get-command-args` to keep `:options` in the correct position and pass target arguments correctly when editor mode options are used.
+* Fix `phpstan-executable` in the `(STRING . (ARGUMENTS ...))` form dropping the command name, which made the first *argument* run as the program (`("docker" "run" ...)` executed `run`).
+* Fix `phpstan-get-command-args` destructively modifying its inputs with `nconc`.  Each call appended the PHPStan arguments onto the caller's own list, growing `phpstan-executable` in the `(STRING . (ARGUMENTS ...))` form on every check, and appending `"--"` to `phpstan-generate-baseline-options` on every `phpstan-generate-baseline`.
+* Fix Flycheck getting stuck on a syntax check when PHPStan reported no files to analyse in a modified buffer.  The check now finishes with an empty result instead of never reporting a status.
 
 ## [0.9.0]
 
