@@ -122,6 +122,20 @@
               (phpstan-replace-path-prefix nil))
           (should (equal src (phpstan-normalize-path src))))))))
 
+(ert-deftest phpstan-test-normalize-path-nil ()
+  "A nil path yields nil rather than erroring, even under a container.
+`phpstan-get-config-file' returns nil when a project has no configuration,
+and a containerized run would otherwise pass that nil to
+`replace-regexp-in-string'."
+  (cl-letf (((symbol-function 'php-project-get-root-dir) (lambda () "/proj/")))
+    (let ((phpstan-replace-path-prefix nil))
+      (dolist (exe '(docker container ("docker" "run" "img") nil "/bin/phpstan"))
+        (let ((phpstan-executable exe))
+          (should-not (phpstan-normalize-path nil))))
+      ;; The optional SOURCE fallback still applies when it is given.
+      (let ((phpstan-executable 'docker))
+        (should (equal "fallback" (phpstan-normalize-path nil "fallback")))))))
+
 ;;; Command line construction
 
 (defmacro phpstan-test--with-stubbed-project (&rest body)
@@ -183,6 +197,17 @@ survive `expand-file-name' on every platform."
       (let ((args (phpstan-get-command-args :include-executable t)))
         (should (member (expand-file-name "phpstan.neon" "/app") args))
         (should-not (member (phpstan-get-config-file) args))))))
+
+(ert-deftest phpstan-test-command-args-without-config-under-container ()
+  "A container run with no configuration file must not error.
+`phpstan-get-config-file' returns nil then, and normalizing it used to
+error; the command line should simply omit the `-c' flag."
+  (phpstan-test--with-stubbed-project
+    (cl-letf (((symbol-function 'phpstan-get-config-file) (lambda () nil)))
+      (let ((phpstan-executable 'docker))
+        (let ((args (phpstan-get-command-args :include-executable t)))
+          (should-not (member "-c" args))
+          (should (member "analyze" args)))))))
 
 (provide 'phpstan-test)
 ;;; phpstan-test.el ends here

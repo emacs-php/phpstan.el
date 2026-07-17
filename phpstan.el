@@ -393,16 +393,19 @@ such a command line still needs project paths rewritten to its mount point."
 
 If neither `phpstan-replace-path-prefix' nor a container executable is set,
 it returns the value of `SOURCE' as it is."
-  (let ((root-directory (expand-file-name (php-project-get-root-dir)))
-        (prefix
+  (let ((prefix
          (or phpstan-replace-path-prefix
              (and (phpstan--container-executable-p) "/app"))))
-    (if prefix
-        (expand-file-name
-         (replace-regexp-in-string (concat "\\`" (regexp-quote root-directory))
-                                   ""
-                                   source-original t t)
-         prefix)
+    ;; SOURCE-ORIGINAL is nil when there is no path to normalize, e.g. when
+    ;; `phpstan-get-config-file' finds no configuration.  Fall through rather
+    ;; than passing nil to `replace-regexp-in-string', which would error.
+    (if (and prefix source-original)
+        (let ((root-directory (expand-file-name (php-project-get-root-dir))))
+          (expand-file-name
+           (replace-regexp-in-string (concat "\\`" (regexp-quote root-directory))
+                                     ""
+                                     source-original t t)
+           prefix))
       (or source source-original))))
 
 (defun phpstan-get-level ()
