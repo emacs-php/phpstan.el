@@ -66,6 +66,20 @@ If you always use Docker for PHPStan, add the following into your ~.emacs~ file 
 (setq-default phpstan-executable 'docker)
 #+END_SRC
 
+*** Using Apple container (macOS)
+[[https://github.com/apple/container][Apple container]] runs the same OCI images as Docker with the same ~run~ command line, so the ~phpstan/phpstan~ image works unchanged.  It requires an Apple Silicon Mac (macOS 26 recommended).
+
+#+BEGIN_SRC shell
+$ brew install container
+$ container system start
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(setq-default phpstan-executable 'container)
+#+END_SRC
+
+The image is taken from ~phpstan-docker-image~, the same variable Docker uses.
+
 Put the following into ~.dir-locals.el~ files on the root directory of project.
 #+BEGIN_SRC emacs-lisp
 ((nil . ((php-project-root . git)
@@ -191,6 +205,7 @@ Rule level of PHPStan analysis.  Please see [[https://github.com/phpstan/phpstan
 - STRING :: Absolute path to `phpstan' executable file.
             - ex) ~"/path/to/phpstan.phar"~
 - SYMBOL ~docker~ ::  Use Docker using phpstan/docker-image.
+- SYMBOL ~container~ ::  Use [[https://github.com/apple/container][Apple container]] (macOS) using phpstan/docker-image.
 - ~(root . STRING)~ ::  Relative path to `phpstan' executable file from project root directory.
      - ex) ~(root . "script/phpstan")~
 - ~(STRING . (ARGUMENTS ...))~ :: Command name and arguments.

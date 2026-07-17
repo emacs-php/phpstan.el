@@ -94,7 +94,10 @@
   :local t)
 
 (defcustom phpstan-docker-image "ghcr.io/phpstan/phpstan"
-  "Docker image URL or Docker Hub image name or NIL."
+  "Docker image URL or Docker Hub image name or NIL.
+
+This image is also used when `phpstan-executable' is `container',
+because Apple container runs the same OCI images as Docker."
   :type '(choice
           (string :tag "URL or image name of Docker Hub.")
           (const :tag "Official Docker container" "ghcr.io/phpstan/phpstan")
@@ -265,6 +268,15 @@ NIL
        (lambda (v) (or (null v) (stringp v)))))
 
 (defconst phpstan-docker-executable "docker")
+(defconst phpstan-container-executable "container")
+
+(defconst phpstan-container-executables
+  (list (cons 'docker phpstan-docker-executable)
+        (cons 'container phpstan-container-executable))
+  "Alist of `phpstan-executable' symbols and their container runtime commands.
+
+Both runtimes take the same `run --rm -v HOST:/app IMAGE' command line and
+run the same OCI image, so they only differ in the command name.")
 
 ;;;###autoload
 (progn
@@ -276,6 +288,9 @@ STRING
 
 `docker'
      Use Docker using phpstan/docker-image.
+
+`container'
+     Use Apple container (macOS) using phpstan/docker-image.
 
 `(root . STRING)'
      Relative path to `phpstan' executable file.
@@ -289,9 +304,31 @@ NIL
        #'(lambda (v) (if (consp v)
                          (or (and (eq 'root (car v)) (stringp (cdr v)))
                              (and (stringp (car v)) (listp (cdr v))))
-                       (or (eq 'docker v) (null v) (stringp v))))))
+                       (or (memq v '(docker container)) (null v) (stringp v))))))
 
 ;; Utilities:
+(defun phpstan--container-runtime-command ()
+  "Return the container runtime command to build a `run' command line, or NIL.
+
+Only the symbol forms of `phpstan-executable' (`docker' and `container') ask
+phpstan.el to build the command line.  The `(STRING . (ARGUMENTS ...))' form
+supplies a complete command line of its own and must not be rewritten here."
+  (and (symbolp phpstan-executable)
+       (alist-get phpstan-executable phpstan-container-executables)))
+
+(defun phpstan--container-executable-p ()
+  "Return non-NIL if PHPStan is executed inside a container.
+
+Unlike `phpstan--container-runtime-command', this also recognizes the
+`(STRING . (ARGUMENTS ...))' form whose car names a known runtime, because
+such a command line still needs project paths rewritten to its mount point."
+  (or (phpstan--container-runtime-command)
+      (and (consp phpstan-executable)
+           (stringp (car phpstan-executable))
+           (member (car phpstan-executable)
+                   (mapcar #'cdr phpstan-container-executables))
+           t)))
+
 (defun phpstan--plist-to-alist (plist)
   "Convert PLIST to association list."
   (let (alist)
@@ -347,16 +384,12 @@ NIL
 (defun phpstan-normalize-path (source-original &optional source)
   "Return normalized source file path to pass by SOURCE-ORIGINAL or SOURCE.
 
-If neither `phpstan-replace-path-prefix' nor executable docker is set,
+If neither `phpstan-replace-path-prefix' nor a container executable is set,
 it returns the value of `SOURCE' as it is."
   (let ((root-directory (expand-file-name (php-project-get-root-dir)))
         (prefix
          (or phpstan-replace-path-prefix
-             (cond
-              ((eq 'docker phpstan-executable) "/app")
-              ((and (consp phpstan-executable)
-                    (string= "docker" (car phpstan-executable)))
-               "/app")))))
+             (and (phpstan--container-executable-p) "/app"))))
     (if prefix
         (expand-file-name
          (replace-regexp-in-string (concat "\\`" (regexp-quote root-directory))
@@ -453,8 +486,8 @@ it returns the value of `SOURCE' as it is."
 (defun phpstan-get-executable-and-args ()
   "Return PHPStan excutable file and arguments."
   (cond
-   ((eq 'docker phpstan-executable)
-    (list phpstan-docker-executable "run" "--rm" "-v"
+   ((phpstan--container-runtime-command)
+    (list (phpstan--container-runtime-command) "run" "--rm" "-v"
           (concat (expand-file-name (php-project-get-root-dir)) ":/app")
           phpstan-docker-image))
    ((and (consp phpstan-executable)

@@ -13,6 +13,7 @@ All notable changes of the `phpstan.el` are documented in this file using the [K
   * Add `phpstan-hover-show-kind-label` custom variable to toggle verbose labels like `return:` / `yield:` in hover text.
   * Add `phpstan-hover-message-prefix` custom variable preset choices, including emoji labels.
 * `phpstan-copy-dumped-type` now prefers PHPDoc type from hover data by default, and can copy non-PHPDoc type with a prefix argument (<kbd>C-u</kbd>).
+* Add `container` to `phpstan-executable` to run PHPStan with [Apple container](https://github.com/apple/container) on macOS.  It uses the same `phpstan-docker-image` as `docker`.
 
 ### Changed
 
