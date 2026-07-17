@@ -15,7 +15,7 @@
 (source 'gnu)
 (source 'melpa)
 
-(depends-on "emacs" "24.3")
+(depends-on "emacs" "27.1")
 (depends-on "compat")
 (depends-on "php-mode")
 (depends-on "php-runtime")

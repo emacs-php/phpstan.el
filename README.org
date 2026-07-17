@@ -5,7 +5,7 @@
 #+END_HTML
 Emacs interface to [[https://github.com/phpstan/phpstan][PHPStan]], includes checker for [[http://www.flycheck.org/en/latest/][Flycheck]].
 ** Support version
-- Emacs 26+
+- Emacs 27.1+
 - PHPStan latest/dev-master (NOT support 0.9 seriese)
 - PHP 7.1+ or Docker runtime
 

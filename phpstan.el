@@ -7,7 +7,7 @@
 ;; Version: 0.9.0
 ;; Keywords: tools, php
 ;; Homepage: https://github.com/emacs-php/phpstan.el
-;; Package-Requires: ((emacs "25.1") (compat "30") (php-mode "1.22.3") (php-runtime "0.2"))
+;; Package-Requires: ((emacs "27.1") (compat "30") (php-mode "1.22.3") (php-runtime "0.2"))
 ;; License: GPL-3.0-or-later
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -63,8 +63,8 @@
   (require 'php)
   (require 'json)
   (require 'tramp)
-  (declare-function 'tramp-dissect-file-name "tramp" '(name &optional nodefault))
-  (declare-function 'tramp-file-name-localname "tamp" '(cl-x)))
+  (declare-function tramp-dissect-file-name "tramp" (name &optional nodefault))
+  (declare-function tramp-file-name-localname "tramp" (cl-x)))
 
 ;; Variables:
 (defgroup phpstan nil
