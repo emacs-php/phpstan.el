@@ -52,4 +52,7 @@ eask install-deps
 echo "==> eask compile"
 eask compile
 
+echo "==> eask test ert"
+eask test ert ./test/*-test.el
+
 echo "==> OK"
