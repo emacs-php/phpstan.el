@@ -1,0 +1,35 @@
+;; -*- mode: eask; lexical-binding: t -*-
+
+;; Emacs 27-only variant of `Eask'.  Eask reads `Eask.27' in preference to
+;; `Eask' on Emacs 27, so this redirects only that version to MELPA Stable.
+;;
+;; MELPA's php-mode and flycheck track Emacs master: flycheck HEAD requires
+;; Emacs 28.1 and will not install on 27.  MELPA Stable's releases still
+;; support 27 (flycheck 36.0, php-mode 1.27.0), so the 27 CI job and the local
+;; .github/run-emacs-27-2.sh check both use them.
+;;
+;; This is a copy of `Eask' with one line changed -- the `source'.  Keep the
+;; rest in sync with `Eask', which is the source of truth.
+
+(package "phpstan"
+         "0.9.0"
+         "Interface to PHPStan (PHP static analyzer)")
+
+(website-url "https://github.com/emacs-php/phpstan.el")
+(keywords "tools" "php")
+
+(package-file "phpstan.el")
+(files "*.el")
+
+(script "test" "echo \"Error: no test specified\" && exit 1")
+
+(source 'gnu)
+(source 'melpa-stable)
+
+(depends-on "emacs" "27.1")
+(depends-on "compat")
+(depends-on "php-mode")
+(depends-on "php-runtime")
+(depends-on "flycheck")
+
+(setq network-security-level 'low)  ; see https://github.com/jcs090218/setup-emacs-windows/issues/156#issuecomment-932956432
