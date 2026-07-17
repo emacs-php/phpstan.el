@@ -471,11 +471,10 @@ it returns the value of `SOURCE' as it is."
     (if (file-executable-p phpstan-executable)
         (list phpstan-executable)
       (list php-executable phpstan-executable)))
-   ((and phpstan-flycheck-auto-set-executable
-         (listp phpstan-executable)
+   ((and (consp phpstan-executable)
          (stringp (car phpstan-executable))
          (listp (cdr phpstan-executable)))
-    (cdr phpstan-executable))
+    phpstan-executable)
    ((null phpstan-executable)
     (let* ((vendor-phpstan (expand-file-name "vendor/bin/phpstan"
                                              (php-project-get-root-dir)))
@@ -499,42 +498,46 @@ it returns the value of `SOURCE' as it is."
         (autoload (phpstan-get-autoload-file))
         (memory-limit (phpstan-get-memory-limit))
         (level (phpstan-get-level)))
-    (nconc (if include-executable (list (car executable-and-args)) nil)
-           (cdr executable-and-args)
-           (list "analyze"
-                 (format "--error-format=%s" (or format "raw"))
-                 "--no-progress" "--no-interaction")
-           (and use-pro (list "--pro" "--no-ansi"))
-           (and config (list "-c" (phpstan--expand-file-name config)))
-           (and autoload (list "-a" autoload))
-           (and memory-limit (list "--memory-limit" memory-limit))
-           (and level (list "-l" level))
-           (cond
-            ((null verbose) nil)
-            ((memq verbose '(1 t)) (list "-v"))
-            ((eq verbose 2) (list "-vv"))
-            ((eq verbose 3) (list "-vvv"))
-            ((error ":verbose option should be 1, 2, 3 or `t'")))
-           (cond
-            (phpstan--use-xdebug-option (list phpstan--use-xdebug-option))
-            ((eq phpstan-use-xdebug-option 'auto)
-             (setq-local phpstan--use-xdebug-option
-                         (when (string= "1" (php-runtime-expr "extension_loaded('xdebug')"))
-                           "--xdebug"))
-             (list phpstan--use-xdebug-option))
-            (phpstan-use-xdebug-option (list "--xdebug")))
-           options
-           (when editor
-             (let ((original-file (plist-get editor :original-file)))
-               (cond
-                ((funcall (plist-get editor :analyze-original) original-file)
-                 (list "--" original-file))
-                ((phpstan-editor-mode-available-p (car (phpstan-get-executable-and-args)))
-                 (list "--tmp-file" (funcall (plist-get editor :temp-file))
-                       "--instead-of" original-file
-                       "--" original-file))
-                ((list "--" (funcall (plist-get editor :inplace)))))))
-           (if editor args (cons "--" args)))))
+    ;; NOTE: Use `append', never `nconc'.  Both `executable-and-args' and
+    ;; `options' may be shared structure owned by the caller (typically the
+    ;; value of `phpstan-executable' or `phpstan-generate-baseline-options'),
+    ;; and `nconc' would destructively grow them on every call.
+    (append (if include-executable (list (car executable-and-args)) nil)
+            (cdr executable-and-args)
+            (list "analyze"
+                  (format "--error-format=%s" (or format "raw"))
+                  "--no-progress" "--no-interaction")
+            (and use-pro (list "--pro" "--no-ansi"))
+            (and config (list "-c" (phpstan--expand-file-name config)))
+            (and autoload (list "-a" autoload))
+            (and memory-limit (list "--memory-limit" memory-limit))
+            (and level (list "-l" level))
+            (cond
+             ((null verbose) nil)
+             ((memq verbose '(1 t)) (list "-v"))
+             ((eq verbose 2) (list "-vv"))
+             ((eq verbose 3) (list "-vvv"))
+             ((error ":verbose option should be 1, 2, 3 or `t'")))
+            (cond
+             (phpstan--use-xdebug-option (list phpstan--use-xdebug-option))
+             ((eq phpstan-use-xdebug-option 'auto)
+              (setq-local phpstan--use-xdebug-option
+                          (when (string= "1" (php-runtime-expr "extension_loaded('xdebug')"))
+                            "--xdebug"))
+              (list phpstan--use-xdebug-option))
+             (phpstan-use-xdebug-option (list "--xdebug")))
+            options
+            (when editor
+              (let ((original-file (plist-get editor :original-file)))
+                (cond
+                 ((funcall (plist-get editor :analyze-original) original-file)
+                  (list "--" original-file))
+                 ((phpstan-editor-mode-available-p (car (phpstan-get-executable-and-args)))
+                  (list "--tmp-file" (funcall (plist-get editor :temp-file))
+                        "--instead-of" original-file
+                        "--" original-file))
+                 ((list "--" (funcall (plist-get editor :inplace)))))))
+            (if editor args (cons "--" args)))))
 
 (defun phpstan-update-ignorebale-errors-from-json-buffer (errors)
   "Update `phpstan--ignorable-errors' variable by ERRORS."

@@ -21,6 +21,8 @@ All notable changes of the `phpstan.el` are documented in this file using the [K
 ### Fixed
 
 * Fix `phpstan-get-command-args` to keep `:options` in the correct position and pass target arguments correctly when editor mode options are used.
+* Fix `phpstan-executable` in the `(STRING . (ARGUMENTS ...))` form dropping the command name, which made the first *argument* run as the program (`("docker" "run" ...)` executed `run`).
+* Fix `phpstan-get-command-args` destructively modifying its inputs with `nconc`.  Each call appended the PHPStan arguments onto the caller's own list, growing `phpstan-executable` in the `(STRING . (ARGUMENTS ...))` form on every check, and appending `"--"` to `phpstan-generate-baseline-options` on every `phpstan-generate-baseline`.
 
 ## [0.9.0]
 
