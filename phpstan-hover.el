@@ -243,7 +243,7 @@
   "Return hover type string at point.
 
 If PREFER-PHPDOC is non-nil, return PHPDoc type when available."
-  (when-let ((datum (phpstan-hover--datum-at-point)))
+  (when-let* ((datum (phpstan-hover--datum-at-point)))
     (let ((type (plist-get datum :typeDescr))
           (phpdoc-type (plist-get datum :phpDocType)))
       (if (and prefer-phpdoc
@@ -332,7 +332,7 @@ This honors `phpstan-hover-display-backend'."
 
 (defun phpstan-hover--show-at-point ()
   "Show hover text for current point if available."
-  (if-let ((datum (phpstan-hover--datum-at-point)))
+  (if-let* ((datum (phpstan-hover--datum-at-point)))
       (phpstan-hover--show (phpstan-hover--format-message datum))
     (setq phpstan-hover--last-shown nil)
     (phpstan-hover--hide)))

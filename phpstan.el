@@ -480,7 +480,7 @@ it returns the value of `SOURCE' as it is."
 (defun phpstan-find-baseline-file ()
   "Find PHPStan baseline file of current project."
   (interactive)
-  (if-let ((path (locate-dominating-file default-directory phpstan-baseline-file)))
+  (if-let* ((path (locate-dominating-file default-directory phpstan-baseline-file)))
       (find-file (expand-file-name phpstan-baseline-file path))
     (user-error "Baseline file not found.  Try running M-x phpstan-generate-baseline")))
 
