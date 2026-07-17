@@ -568,15 +568,27 @@ it returns the value of `SOURCE' as it is."
              (phpstan-use-xdebug-option (list "--xdebug")))
             options
             (when editor
-              (let ((original-file (plist-get editor :original-file)))
+              (let* ((original-file (plist-get editor :original-file))
+                     ;; PHPStan may see the project through a mount point, so
+                     ;; every path handed to it has to be translated, exactly
+                     ;; like the config file above.
+                     (target-file (phpstan-normalize-path original-file)))
                 (cond
                  ((funcall (plist-get editor :analyze-original) original-file)
-                  (list "--" original-file))
+                  (list "--" target-file))
                  ((phpstan-editor-mode-available-p (car (phpstan-get-executable-and-args)))
-                  (list "--tmp-file" (funcall (plist-get editor :temp-file))
-                        "--instead-of" original-file
-                        "--" original-file))
-                 ((list "--" (funcall (plist-get editor :inplace)))))))
+                  ;; A container only sees the project, so the temporary copy
+                  ;; has to be created inside it.  `:temp-file' puts it in the
+                  ;; system temporary directory, which is not mounted.
+                  (let ((temp-file (funcall (plist-get editor
+                                                       (if (phpstan--container-executable-p)
+                                                           :inplace
+                                                         :temp-file)))))
+                    (list "--tmp-file" (phpstan-normalize-path temp-file)
+                          "--instead-of" target-file
+                          "--" target-file)))
+                 ((list "--" (phpstan-normalize-path
+                              (funcall (plist-get editor :inplace))))))))
             (if editor args (cons "--" args)))))
 
 (defun phpstan-update-ignorebale-errors-from-json-buffer (errors)

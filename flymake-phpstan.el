@@ -95,8 +95,9 @@
 
 (defun flymake-phpstan--create-temp-file ()
   "Create temp file and return the path."
-  (phpstan-normalize-path
-   (flymake-proc-init-create-temp-buffer-copy 'flymake-proc-create-temp-inplace)))
+  ;; `phpstan-get-command-args' translates the path for the container mount
+  ;; point, so return the path as it is on this side.
+  (flymake-proc-init-create-temp-buffer-copy 'flymake-proc-create-temp-inplace))
 
 (defun flymake-phpstan (report-fn &rest _ignored-args)
   "Flymake backend for PHPStan report using REPORT-FN."
