@@ -10,7 +10,7 @@
 (package-file "phpstan.el")
 (files "*.el")
 
-(script "test" "echo \"Error: no test specified\" && exit 1")
+(script "test" "eask test ert ./test/*-test.el")
 
 (source 'gnu)
 (source 'melpa)

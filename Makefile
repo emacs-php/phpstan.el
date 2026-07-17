@@ -10,7 +10,10 @@ install:
 compile:
 	$(EASK) compile
 
-all: clean autoloads install compile
+test:
+	$(EASK) test ert ./test/*-test.el
+
+all: clean autoloads install compile test
 
 autoloads:
 	$(EASK) generate autoloads
@@ -18,4 +21,4 @@ autoloads:
 clean:
 	$(EASK) clean all
 
-.PHONY: all autoloads clean
+.PHONY: all autoloads clean compile install test
