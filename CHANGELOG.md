@@ -37,6 +37,10 @@ All notable changes of the `phpstan.el` are documented in this file using the [K
 * Fix editor mode detection asking the wrong program for its version.  Only the first element of the command line was probed, which is the container runtime for `(phpstan-executable . docker)` / `container` and `php` for a PHAR without the executable bit — so `docker --version` and `php --version` were parsed as PHPStan versions (`d1c06ef`, `Technologies`) and editor mode was silently disabled for every setup except a directly executable `phpstan`.
 * `phpstan-version` and `phpstan-editor-mode-available-p` now take the whole command line, as returned by `phpstan-get-executable-and-args`.  A bare string is still accepted.  `phpstan-version` no longer merges STDERR into the version string, which a container runtime pollutes with its progress report.
 
+### Removed
+
+* Drop support for Emacs 26 and earlier.  All files now require Emacs 27.1, which is also the floor of `php-mode` and `flycheck` themselves, so anything older could not have resolved its dependencies anyway.
+
 ## [0.9.0]
 
 ### Added
