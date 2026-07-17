@@ -568,15 +568,27 @@ it returns the value of `SOURCE' as it is."
              (phpstan-use-xdebug-option (list "--xdebug")))
             options
             (when editor
-              (let ((original-file (plist-get editor :original-file)))
+              (let* ((original-file (plist-get editor :original-file))
+                     ;; PHPStan may see the project through a mount point, so
+                     ;; every path handed to it has to be translated, exactly
+                     ;; like the config file above.
+                     (target-file (phpstan-normalize-path original-file)))
                 (cond
                  ((funcall (plist-get editor :analyze-original) original-file)
-                  (list "--" original-file))
-                 ((phpstan-editor-mode-available-p (car (phpstan-get-executable-and-args)))
-                  (list "--tmp-file" (funcall (plist-get editor :temp-file))
-                        "--instead-of" original-file
-                        "--" original-file))
-                 ((list "--" (funcall (plist-get editor :inplace)))))))
+                  (list "--" target-file))
+                 ((phpstan-editor-mode-available-p executable-and-args)
+                  ;; A container only sees the project, so the temporary copy
+                  ;; has to be created inside it.  `:temp-file' puts it in the
+                  ;; system temporary directory, which is not mounted.
+                  (let ((temp-file (funcall (plist-get editor
+                                                       (if (phpstan--container-executable-p)
+                                                           :inplace
+                                                         :temp-file)))))
+                    (list "--tmp-file" (phpstan-normalize-path temp-file)
+                          "--instead-of" target-file
+                          "--" target-file)))
+                 ((list "--" (phpstan-normalize-path
+                              (funcall (plist-get editor :inplace))))))))
             (if editor args (cons "--" args)))))
 
 (defun phpstan-update-ignorebale-errors-from-json-buffer (errors)
@@ -601,36 +613,71 @@ it returns the value of `SOURCE' as it is."
                                    collect (cons (plist-get message :line)
                                                  (substring-no-properties msg (match-end 0))))))))
 
-(defun phpstan-version (executable)
-  "Return the PHPStan version of EXECUTABLE."
-  (if-let* ((cached-entry (assoc executable phpstan-executable-versions-alist)))
-      (cdr cached-entry)
-    (let* ((version (thread-first
-                      (mapconcat #'shell-quote-argument (list executable "--version") " ")
-                      (shell-command-to-string)
-                      (string-trim-right)
-                      (split-string " ")
-                      (last)
-                      (car-safe))))
-      (prog1 version
-        (push (cons executable version) phpstan-executable-versions-alist)))))
+(defun phpstan--version-output (command)
+  "Run COMMAND with --version and return its standard output, or NIL.
 
-(defun phpstan-editor-mode-available-p (executable)
-  "Check if the specified PHPStan EXECUTABLE supports editor mode.
+STDERR is discarded rather than merged: a container runtime reports its
+progress there, and it would otherwise be read as part of the version."
+  (with-temp-buffer
+    (let ((status (apply #'process-file (car command) nil (list t nil) nil
+                         (append (cdr command) (list "--version")))))
+      (when (eq 0 status)
+        (buffer-string)))))
 
-If a cached result for EXECUTABLE exists, it is returned directly.
+(defun phpstan--version-from-output (output)
+  "Return the version number reported in OUTPUT, or NIL.
+
+OUTPUT looks like \"PHPStan - PHP Static Analysis Tool 1.12.33\"."
+  (when output
+    (let ((last-line (car (last (split-string (string-trim output) "\n" t)))))
+      (when last-line
+        (car (last (split-string last-line " " t)))))))
+
+(defun phpstan-version (command)
+  "Return the PHPStan version of COMMAND.
+
+COMMAND is the command line that runs PHPStan, as returned by
+`phpstan-get-executable-and-args'.  A bare string is also accepted, and
+taken as the name of an executable.
+
+Passing the whole command line matters: PHPStan is not always the program
+being executed.  It is `docker' or `container' for a containerized PHPStan,
+and `php' for a PHAR without the executable bit, and asking either of those
+for its version answers a version that has nothing to do with PHPStan.
+
+The result is cached in `phpstan-executable-versions-alist', keyed by the
+command line, because probing may have to start a container."
+  (let* ((command (if (listp command) command (list command)))
+         (cache-key (mapconcat #'identity command " ")))
+    (if-let* ((cached-entry (assoc cache-key phpstan-executable-versions-alist)))
+        (cdr cached-entry)
+      (let ((version (phpstan--version-from-output
+                      (phpstan--version-output command))))
+        (prog1 version
+          (push (cons cache-key version) phpstan-executable-versions-alist))))))
+
+(defun phpstan-editor-mode-available-p (command)
+  "Check if the PHPStan invoked by COMMAND supports editor mode.
+
+COMMAND is the command line that runs PHPStan, as returned by
+`phpstan-get-executable-and-args'.  A bare string is also accepted, and
+taken as the name of an executable.
+
+If a cached result for COMMAND exists, it is returned directly.
 Otherwise, this function attempts to determine support by retrieving
-the PHPStan version using `phpstan --version' command."
+the PHPStan version using `phpstan --version' command.  Support is
+assumed to be absent when the version cannot be determined."
   (pcase phpstan-activate-editor-mode
     ('enabled t)
     ('disabled nil)
     ('nil
-     (let* ((version (phpstan-version executable)))
-       (if (string-match-p (eval-when-compile (regexp-quote "-dev@")) version)
-           t
-         (pcase (elt version 0)
-           (?1 (version<= "1.12.27" version))
-           (?2 (version<= "2.1.17" version))))))))
+     (let ((version (phpstan-version command)))
+       (when (and version (not (string-empty-p version)))
+         (if (string-match-p (eval-when-compile (regexp-quote "-dev@")) version)
+             t
+           (pcase (elt version 0)
+             (?1 (version<= "1.12.27" version))
+             (?2 (version<= "2.1.17" version)))))))))
 
 (defconst phpstan--re-ignore-tag
   (eval-when-compile

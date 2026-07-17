@@ -30,6 +30,12 @@ All notable changes of the `phpstan.el` are documented in this file using the [K
 * Fix `phpstan-executable` in the `(STRING . (ARGUMENTS ...))` form dropping the command name, which made the first *argument* run as the program (`("docker" "run" ...)` executed `run`).
 * Fix `phpstan-get-command-args` destructively modifying its inputs with `nconc`.  Each call appended the PHPStan arguments onto the caller's own list, growing `phpstan-executable` in the `(STRING . (ARGUMENTS ...))` form on every check, and appending `"--"` to `phpstan-generate-baseline-options` on every `phpstan-generate-baseline`.
 * Fix Flycheck getting stuck on a syntax check when PHPStan reported no files to analyse in a modified buffer.  The check now finishes with an empty result instead of never reporting a status.
+* Fix the analyzed file being passed to a containerized PHPStan as a host path.  `flycheck-phpstan` reported no errors at all with `(phpstan-executable . docker)`, because PHPStan answered `Path /Users/... does not exist`.  `flymake-phpstan` was affected for unmodified buffers.
+* Fix the `--tmp-file` copy being created in the system temporary directory when running containerized, where the container cannot see it.
+* Fix the JSON report being ignored when the container runtime prefixes it with progress output on STDERR, which made every check with `(phpstan-executable . container)` report no errors.
+* Fix `flycheck-phpstan` silently discarding the fallback warning when PHPStan produced no JSON report, hiding failures such as a broken configuration file behind a clean buffer.
+* Fix editor mode detection asking the wrong program for its version.  Only the first element of the command line was probed, which is the container runtime for `(phpstan-executable . docker)` / `container` and `php` for a PHAR without the executable bit — so `docker --version` and `php --version` were parsed as PHPStan versions (`d1c06ef`, `Technologies`) and editor mode was silently disabled for every setup except a directly executable `phpstan`.
+* `phpstan-version` and `phpstan-editor-mode-available-p` now take the whole command line, as returned by `phpstan-get-executable-and-args`.  A bare string is still accepted.  `phpstan-version` no longer merges STDERR into the version string, which a container runtime pollutes with its progress report.
 
 ## [0.9.0]
 
