@@ -23,6 +23,10 @@ All notable changes of the `phpstan.el` are documented in this file using the [K
   * `php` is no longer required in `exec-path` to enable the checker.  Previously the dummy `"php"` in `:command` was resolved by Flycheck *before* the `:enabled` predicate ran, so a Docker-only setup could not enable the checker at all.
   * `M-x flycheck-verify-setup` now reports the real PHPStan command and configuration file instead of `"php"`.
 * `phpstan-flycheck-auto-set-executable` is obsolete and ignored.
+* `flymake-phpstan` now reads PHPStan's JSON output instead of the raw text format, bringing it to parity with `flycheck-phpstan`.
+  * Each message shows its identifier and tip (configurable with `flymake-phpstan-ignore-metadata-list` and `flymake-phpstan-metadata-separator`).
+  * `phpstan-insert-ignore` and `phpstan-copy-dumped-type` now work from a Flymake session, because the backend refreshes `phpstan--ignorable-errors` and `phpstan--dumped-types`.
+  * Progress a container runtime writes to STDERR no longer confuses the parser, and a PHPStan failure that produces no report is surfaced as a warning rather than dropped.
 
 ### Fixed
 
