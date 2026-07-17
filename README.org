@@ -212,8 +212,8 @@ Rule level of PHPStan analysis.  Please see [[https://github.com/phpstan/phpstan
      - ex) ~("docker" "run" "--rm" "-v" "/path/to/project-dir/:/app" "your/docker-image")~
 - ~nil~ :: Auto detect ~phpstan~ executable file by composer dependencies of the project or executable command in ~PATH~ environment variable.
 
-*** Custom variable ~phpstan-flycheck-auto-set-executable~
-Set flycheck phpstan-executable automatically when non-NIL.
+*** Custom variable ~phpstan-flycheck-auto-set-executable~ (obsolete)
+Obsolete and ignored.  ~flycheck-phpstan~ now builds the whole command line from ~phpstan-executable~, so it no longer injects an executable into flycheck's ~flycheck-phpstan-executable~ variable.
 
 *** Custom variable ~phpstan-memory-limit~
 Use phpstan memory limit option when non-NIL.

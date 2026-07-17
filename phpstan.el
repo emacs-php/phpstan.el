@@ -77,8 +77,15 @@
   :link '(url-link :tag "phpstan.el" "https://github.com/emacs-php/phpstan.el"))
 
 (defcustom phpstan-flycheck-auto-set-executable t
-  "Set flycheck phpstan-executable automatically."
+  "Set flycheck phpstan-executable automatically.
+
+This variable no longer has any effect.  `flycheck-phpstan' now builds the
+whole command line from `phpstan-executable', so it never has to inject an
+executable into flycheck's own `flycheck-phpstan-executable' variable."
   :type 'boolean)
+(make-obsolete-variable 'phpstan-flycheck-auto-set-executable
+                        "the executable is always derived from `phpstan-executable'."
+                        "0.10.0")
 
 (defcustom phpstan-enable-on-no-config-file t
   "If T, activate config from composer even when `phpstan.neon' is not found."
