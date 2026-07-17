@@ -25,6 +25,7 @@
 
 ;;; Code:
 (require 'ert)
+(require 'cl-lib)
 (require 'flycheck-phpstan)
 
 (defconst flycheck-phpstan-test--json
@@ -65,6 +66,25 @@ A swallowed fallback would show a failing PHPStan as a clean buffer."
     (should (eq 'warning (flycheck-error-level (car errors))))
     (should (string-match-p "Bootstrap file"
                             (flycheck-error-message (car errors))))))
+
+(ert-deftest flycheck-phpstan-test-identifier-only-when-ignorable ()
+  "The identifier prefix is shown only for an ignorable message.
+A non-ignorable message (\"ignorable\":false) reads its flag as nil now, so
+it must not look like something `phpstan-insert-ignore' can act on."
+  (let* ((phpstan-disable-buffer-errors t)
+         (phpstan-identifier-prefix "ID:")
+         (flycheck-phpstan-ignore-metadata-list nil)
+         (output (concat "{\"files\":{\"/x\":{\"messages\":["
+                         "{\"message\":\"parse error\",\"line\":1,\"ignorable\":false,"
+                         "\"identifier\":\"ignore.parseError\"},"
+                         "{\"message\":\"undefined\",\"line\":2,\"ignorable\":true,"
+                         "\"identifier\":\"variable.undefined\"}]}}}"))
+         (errors (flycheck-phpstan-parse-output output))
+         (by-line (lambda (n) (car (cl-remove-if-not
+                                    (lambda (e) (= n (flycheck-error-line e))) errors)))))
+    (should-not (string-match-p "ID:" (flycheck-error-message (funcall by-line 1))))
+    (should (string-match-p "ID:variable.undefined"
+                            (flycheck-error-message (funcall by-line 2))))))
 
 (provide 'flycheck-phpstan-test)
 ;;; flycheck-phpstan-test.el ends here
