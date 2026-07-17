@@ -69,23 +69,26 @@
 ;; Parsing PHPStan output:
 (defun flycheck-phpstan-parse-output (output &optional _checker _buffer)
   "Parse PHPStan errors from OUTPUT."
-  (let* ((json-buffer (with-current-buffer (flycheck-phpstan--temp-buffer)
-                        (erase-buffer)
-                        (insert output)
-                        (current-buffer)))
-         ;; Match `phpstan--parse-json', which skips everything before the
-         ;; first line starting with `{' so that output written to STDERR is
-         ;; ignored.  Anchoring at the start of OUTPUT instead would miss the
-         ;; JSON whenever the runtime prefixes it, as Apple container does
-         ;; with its progress report.
-         (data (if (string-match-p "^{" output)
-                   (phpstan--parse-json json-buffer)
-                 (list (flycheck-error-new-at 1 1 'warning (string-trim output)))))
-         (errors (phpstan--plist-to-alist (plist-get data :files))))
-    (unless phpstan-disable-buffer-errors
-      (phpstan-update-ignorebale-errors-from-json-buffer errors))
-    (phpstan-update-dumped-types errors)
-    (flycheck-phpstan--build-errors errors)))
+  ;; Look for a line starting with `{', the same condition
+  ;; `phpstan--parse-json' acts on: it skips everything before that line so
+  ;; that output written to STDERR is ignored, since the checker process
+  ;; merges STDERR into STDOUT.  Anchoring at the start of OUTPUT instead
+  ;; would miss the JSON whenever the runtime prefixes it, as Apple container
+  ;; does with its progress report.
+  (if (not (string-match-p "^{" output))
+      ;; PHPStan produced no report at all, so OUTPUT is a failure of some
+      ;; kind.  Surface it rather than reporting a clean buffer.
+      (list (flycheck-error-new-at 1 1 'warning (string-trim output)))
+    (let* ((json-buffer (with-current-buffer (flycheck-phpstan--temp-buffer)
+                          (erase-buffer)
+                          (insert output)
+                          (current-buffer)))
+           (data (phpstan--parse-json json-buffer))
+           (errors (phpstan--plist-to-alist (plist-get data :files))))
+      (unless phpstan-disable-buffer-errors
+        (phpstan-update-ignorebale-errors-from-json-buffer errors))
+      (phpstan-update-dumped-types errors)
+      (flycheck-phpstan--build-errors errors))))
 
 (defun flycheck-phpstan--temp-buffer ()
   "Return a temporary buffer for decode JSON."
