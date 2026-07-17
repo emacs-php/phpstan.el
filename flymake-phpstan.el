@@ -4,10 +4,10 @@
 
 ;; Author: USAMI Kenta <tadsan@zonu.me>
 ;; Created: 31 Mar 2020
-;; Version: 0.9.0
+;; Version: 0.10.0
 ;; Keywords: tools, php
 ;; Homepage: https://github.com/emacs-php/phpstan.el
-;; Package-Requires: ((emacs "27.1") (phpstan "0.9.0"))
+;; Package-Requires: ((emacs "27.1") (phpstan "0.10.0"))
 ;; License: GPL-3.0-or-later
 
 ;; This program is free software; you can redistribute it and/or modify

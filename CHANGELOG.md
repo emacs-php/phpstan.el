@@ -2,7 +2,7 @@
 
 All notable changes of the `phpstan.el` are documented in this file using the [Keep a Changelog](https://keepachangelog.com/) principles.
 
-## Unreleased
+## [0.10.0]
 
 ### Added
 

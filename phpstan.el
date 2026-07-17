@@ -4,7 +4,7 @@
 
 ;; Author: USAMI Kenta <tadsan@zonu.me>
 ;; Created: 15 Mar 2018
-;; Version: 0.9.0
+;; Version: 0.10.0
 ;; Keywords: tools, php
 ;; Homepage: https://github.com/emacs-php/phpstan.el
 ;; Package-Requires: ((emacs "27.1") (compat "30") (php-mode "1.22.3") (php-runtime "0.2"))
